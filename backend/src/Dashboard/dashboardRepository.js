@@ -1,33 +1,35 @@
 const pool = require("../config/db");
 
-const getTotalsAndCount = async () => {
+const getTotalsAndCount = async (userId) => {
   const query = `
     SELECT 
       COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0)::numeric as total_income,
       COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0)::numeric as total_expense,
       COUNT(*)::int as total_transactions
     FROM transactions
+    WHERE user_id = $1
   `;
-  const { rows } = await pool.query(query);
+  // Eksekusi query dengan parameter userId
+  const { rows } = await pool.query(query, [userId]);
   return rows[0] || { total_income: 0, total_expense: 0, total_transactions: 0 };
 };
 
-const getExpenseOverviewGrouped = async () => {
+const getExpenseOverviewGrouped = async (userId) => {
   const query = `
     SELECT 
       COALESCE(c.name, 'Uncategorized') as "categoryName",
       SUM(t.amount)::numeric as "totalAmount"
     FROM transactions t
     LEFT JOIN categories c ON t.category_id = c.id
-    WHERE t.type = 'expense'
+    WHERE t.type = 'expense' AND t.user_id = $1
     GROUP BY c.name
     ORDER BY "totalAmount" DESC
   `;
-  const { rows } = await pool.query(query);
+  const { rows } = await pool.query(query, [userId]);
   return rows;
 };
 
-const getRecentTransactions = async (limit = 5) => {
+const getRecentTransactions = async (userId, limit = 5) => {
   const query = `
     SELECT 
       t.id,
@@ -44,10 +46,12 @@ const getRecentTransactions = async (limit = 5) => {
       END as categories
     FROM transactions t
     LEFT JOIN categories c ON t.category_id = c.id
+    WHERE t.user_id = $1
     ORDER BY t.transaction_date DESC, t.id DESC
-    LIMIT $1
+    LIMIT $2
   `;
-  const { rows } = await pool.query(query, [limit]);
+  // Parameter $1 adalah userId, parameter $2 adalah limit
+  const { rows } = await pool.query(query, [userId, limit]);
   return rows;
 };
 

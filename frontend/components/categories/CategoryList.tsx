@@ -35,7 +35,6 @@ export default function CategoryList({ categories, onEdit, onDelete }: CategoryL
             </div>
             <div>
               <h4 className="font-bold text-sm text-slate-900 dark:text-white">{cat.name}</h4>
-              <span className="text-[11px] text-slate-400">ID #{cat.id}</span>
             </div>
           </div>
 

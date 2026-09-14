@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { useRouter } from "next/navigation";
 import Navbar from "@/components/layout/Navbar";
 import TransactionFilter from "@/components/transactions/TransactionFilter";
 import TransactionTable from "@/components/transactions/TransactionTable";
@@ -18,6 +20,9 @@ import {
 import { AlertCircle, Plus, RefreshCw } from "lucide-react";
 
 export default function TransactionsPage() {
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
+
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,6 +54,12 @@ export default function TransactionsPage() {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.replace("/login");
+    }
+  }, [authLoading, user, router]);
+
   const loadCategories = async () => {
     try {
       const res = await getCategories();
@@ -73,12 +84,16 @@ export default function TransactionsPage() {
   }, [filters]);
 
   useEffect(() => {
-    loadCategories();
-  }, []);
+    if (user && !authLoading) {
+      loadCategories();
+    }
+  }, [user, authLoading]);
 
   useEffect(() => {
-    loadTransactions();
-  }, [loadTransactions]);
+    if (user && !authLoading) {
+      loadTransactions();
+    }
+  }, [user, authLoading, loadTransactions]);
 
   const handleFilterChange = (newFilters: Partial<TransactionFilters>) => {
     setFilters((prev) => ({ ...prev, ...newFilters }));
@@ -132,6 +147,19 @@ export default function TransactionsPage() {
       setDeleteLoading(false);
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center py-24 space-y-3">
+        <div className="w-8 h-8 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm font-medium text-slate-500">Loading...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="flex-1 flex flex-col min-h-screen relative">

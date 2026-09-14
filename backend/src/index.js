@@ -8,6 +8,7 @@ const pool = require("./config/db");
 const categoryRoutes = require("./Categories/categoryRoute");
 const transactionRoutes = require("./Transactions/transactionRoute");
 const dashboardRoutes = require("./Dashboard/dashboardRoute");
+const authRoutes = require("./Auth/authRoute");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -42,6 +43,7 @@ app.get("/health/database", async (req, res) => {
 });
 
 // Routes
+app.use("/auth", authRoutes);
 app.use("/categories", categoryRoutes);
 app.use("/transactions", transactionRoutes);
 app.use("/dashboard", dashboardRoutes);

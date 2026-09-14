@@ -1,8 +1,8 @@
 const pool = require("../config/db");
 
-const findAllTransactions = async (filters = {}) => {
-  const conditions = [];
-  const params = [];
+const findAllTransactions = async (userId, filters = {}) => {
+  const conditions = ["t.user_id = $1"];
+  const params = [userId];
 
   if (filters.type) {
     params.push(filters.type);
@@ -81,7 +81,7 @@ const findAllTransactions = async (filters = {}) => {
   };
 };
 
-const findTransactionById = async (id) => {
+const findTransactionById = async (id, userId) => {
   const query = `
     SELECT 
       t.id,
@@ -98,16 +98,16 @@ const findTransactionById = async (id) => {
       END as categories
     FROM transactions t
     LEFT JOIN categories c ON t.category_id = c.id
-    WHERE t.id = $1
+    WHERE t.id = $1 AND t.user_id = $2
   `;
-  const { rows } = await pool.query(query, [id]);
+  const { rows } = await pool.query(query, [id, userId]);
   return rows[0] || null;
 };
 
 const createTransaction = async (data) => {
   const insertQuery = `
-    INSERT INTO transactions (title, amount, type, category_id, description, transaction_date)
-    VALUES ($1, $2, $3, $4, $5, $6)
+    INSERT INTO transactions (title, amount, type, category_id, description, transaction_date, user_id)
+    VALUES ($1, $2, $3, $4, $5, $6, $7)
     RETURNING id
   `;
   const values = [
@@ -117,16 +117,18 @@ const createTransaction = async (data) => {
     data.category_id,
     data.description || null,
     data.transaction_date,
+    data.user_id, // Pastikan baris ini ada di urutan ke-7 untuk mengisi $7
   ];
+
   const { rows } = await pool.query(insertQuery, values);
-  return await findTransactionById(rows[0].id);
+  return await findTransactionById(rows[0].id, data.user_id);
 };
 
-const updateTransaction = async (id, data) => {
+const updateTransaction = async (id, userId, data) => {
   const updateQuery = `
     UPDATE transactions
     SET title = $1, amount = $2, type = $3, category_id = $4, description = $5, transaction_date = $6
-    WHERE id = $7
+    WHERE id = $7 AND user_id = $8
     RETURNING id
   `;
   const values = [
@@ -136,15 +138,16 @@ const updateTransaction = async (id, data) => {
     data.category_id,
     data.description || null,
     data.transaction_date,
-    id,
+    id,     // Menggunakan parameter id dari argumen fungsi ($7)
+    userId, // Menggunakan parameter userId dari argumen fungsi ($8)
   ];
   await pool.query(updateQuery, values);
-  return await findTransactionById(id);
+  return await findTransactionById(id, userId);
 };
 
-const deleteTransaction = async (id) => {
-  const query = "DELETE FROM transactions WHERE id = $1 RETURNING *";
-  const { rows } = await pool.query(query, [id]);
+const deleteTransaction = async (id, userId) => {
+  const query = "DELETE FROM transactions WHERE id = $1 AND user_id = $2 RETURNING *";
+  const { rows } = await pool.query(query, [id, userId]);
   return rows[0] || null;
 };
 

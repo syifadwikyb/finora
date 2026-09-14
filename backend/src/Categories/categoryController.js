@@ -2,7 +2,8 @@ const categoryService = require("./categoryService");
 
 const getCategories = async (req, res) => {
   try {
-    const categories = await categoryService.getAllCategories();
+    const userId = req.query.userId || null;
+    const categories = await categoryService.getAllCategories(userId);
     res.status(200).json({
       success: true,
       message: "Categories fetched successfully",
@@ -20,7 +21,8 @@ const getCategories = async (req, res) => {
 const getCategory = async (req, res) => {
   try {
     const { id } = req.params;
-    const category = await categoryService.getCategoryById(id);
+    const userId = req.query.userId || null;
+    const category = await categoryService.getCategoryById(id, userId);
     res.status(200).json({
       success: true,
       message: "Category fetched successfully",
@@ -55,7 +57,8 @@ const createCategory = async (req, res) => {
 const updateCategory = async (req, res) => {
   try {
     const { id } = req.params;
-    const category = await categoryService.updateCategory(id, req.body);
+    const userId = req.query.userId || req.body.user_id || null;
+    const category = await categoryService.updateCategory(id, userId, req.body);
     res.status(200).json({
       success: true,
       message: "Category updated successfully",
@@ -77,7 +80,8 @@ const patchCategory = async (req, res) => {
 const deleteCategory = async (req, res) => {
   try {
     const { id } = req.params;
-    await categoryService.deleteCategory(id);
+    const userId = req.query.userId || null;
+    await categoryService.deleteCategory(id, userId);
     res.status(200).json({
       success: true,
       message: "Category deleted successfully",

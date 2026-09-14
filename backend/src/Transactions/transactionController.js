@@ -2,7 +2,13 @@ const transactionService = require("./transactionService");
 
 const getTransactions = async (req, res) => {
   try {
-    const result = await transactionService.getAllTransactions(req.query);
+    // Ambil userId dari query parameters (?userId=...)
+    const userId = req.query.userId;
+    if (!userId) {
+      return res.status(400).json({ success: false, message: "User ID is required" });
+    }
+
+    const result = await transactionService.getAllTransactions(userId, req.query);
     res.status(200).json({
       success: true,
       message: "Transactions fetched successfully",
@@ -21,7 +27,16 @@ const getTransactions = async (req, res) => {
 const getTransaction = async (req, res) => {
   try {
     const { id } = req.params;
-    const transaction = await transactionService.getTransactionById(id);
+    const userId = req.query.userId; // Ambil userId dari query parameters
+    if (!userId) {
+      return res.status(400).json({ success: false, message: "User ID is required" });
+    }
+
+    const transaction = await transactionService.getTransactionById(id, userId);
+    if (!transaction) {
+      return res.status(404).json({ success: false, message: "Transaction not found" });
+    }
+
     res.status(200).json({
       success: true,
       message: "Transaction fetched successfully",
@@ -38,6 +53,10 @@ const getTransaction = async (req, res) => {
 
 const createTransaction = async (req, res) => {
   try {
+    if (!req.body.user_id) {
+      return res.status(400).json({ success: false, message: "User ID is required" });
+    }
+
     const transaction = await transactionService.createTransaction(req.body);
     res.status(201).json({
       success: true,
@@ -45,7 +64,7 @@ const createTransaction = async (req, res) => {
       data: transaction,
     });
   } catch (error) {
-    console.error("[ERROR]", error.message);
+    console.error("[ERROR CREATE TRANSACTION]:", error.message);
     res.status(error.statusCode || 500).json({
       success: false,
       message: error.message || "Failed to create transaction",
@@ -56,7 +75,16 @@ const createTransaction = async (req, res) => {
 const updateTransaction = async (req, res) => {
   try {
     const { id } = req.params;
-    const transaction = await transactionService.updateTransaction(id, req.body);
+    const userId = req.query.userId || req.body.user_id; // Ambil userId dari query atau body
+    if (!userId) {
+      return res.status(400).json({ success: false, message: "User ID is required" });
+    }
+
+    const transaction = await transactionService.updateTransaction(id, userId, req.body);
+    if (!transaction) {
+      return res.status(404).json({ success: false, message: "Transaction not found or unauthorized" });
+    }
+
     res.status(200).json({
       success: true,
       message: "Transaction updated successfully",
@@ -78,7 +106,16 @@ const patchTransaction = async (req, res) => {
 const deleteTransaction = async (req, res) => {
   try {
     const { id } = req.params;
-    await transactionService.deleteTransaction(id);
+    const userId = req.query.userId; // Ambil userId dari query parameters (?userId=...)
+    if (!userId) {
+      return res.status(400).json({ success: false, message: "User ID is required" });
+    }
+
+    const deleted = await transactionService.deleteTransaction(id, userId);
+    if (!deleted) {
+      return res.status(404).json({ success: false, message: "Transaction not found or unauthorized" });
+    }
+
     res.status(200).json({
       success: true,
       message: "Transaction deleted successfully",

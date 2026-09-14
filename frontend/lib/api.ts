@@ -1,4 +1,6 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+import { auth } from "@/lib/firebase";
+import { User } from "firebase/auth";
 
 export interface Category {
   id: number;
@@ -58,9 +60,30 @@ export async function getDatabaseHealth() {
   return res.json();
 }
 
+// Helper function to get the current authenticated user, waiting for Firebase initialization if needed
+export async function getCurrentUser(): Promise<User | null> {
+  if (auth.currentUser) return auth.currentUser;
+
+  if (typeof auth.authStateReady === "function") {
+    await auth.authStateReady();
+    return auth.currentUser;
+  }
+
+  return new Promise<User | null>((resolve) => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      unsubscribe();
+      resolve(user);
+    });
+  });
+}
+
 // Categories API
 export async function getCategories(): Promise<{ success: boolean; data: Category[] }> {
-  const response = await fetch(`${API_URL}/categories`, { cache: "no-store" });
+  let user = auth.currentUser;
+  if (!user) user = await getCurrentUser();
+
+  const url = user ? `${API_URL}/categories?userId=${user.uid}` : `${API_URL}/categories`;
+  const response = await fetch(url, { cache: "no-store" });
   const data = await response.json();
   if (!response.ok || !data.success) {
     throw new Error(data.message || "Failed to fetch categories");
@@ -69,7 +92,11 @@ export async function getCategories(): Promise<{ success: boolean; data: Categor
 }
 
 export async function getCategoryById(id: number | string): Promise<{ success: boolean; data: Category }> {
-  const response = await fetch(`${API_URL}/categories/${id}`, { cache: "no-store" });
+  let user = auth.currentUser;
+  if (!user) user = await getCurrentUser();
+
+  const url = user ? `${API_URL}/categories/${id}?userId=${user.uid}` : `${API_URL}/categories/${id}`;
+  const response = await fetch(url, { cache: "no-store" });
   const data = await response.json();
   if (!response.ok || !data.success) {
     throw new Error(data.message || "Failed to fetch category");
@@ -78,10 +105,14 @@ export async function getCategoryById(id: number | string): Promise<{ success: b
 }
 
 export async function createCategory(payload: { name: string }): Promise<{ success: boolean; data: Category }> {
+  let user = auth.currentUser;
+  if (!user) user = await getCurrentUser();
+  if (!user) throw new Error("Harus login terlebih dahulu");
+
   const response = await fetch(`${API_URL}/categories`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ ...payload, user_id: user.uid }),
   });
   const data = await response.json();
   if (!response.ok || !data.success) {
@@ -91,10 +122,14 @@ export async function createCategory(payload: { name: string }): Promise<{ succe
 }
 
 export async function updateCategory(id: number | string, payload: { name: string }): Promise<{ success: boolean; data: Category }> {
-  const response = await fetch(`${API_URL}/categories/${id}`, {
+  let user = auth.currentUser;
+  if (!user) user = await getCurrentUser();
+  if (!user) throw new Error("Harus login terlebih dahulu");
+
+  const response = await fetch(`${API_URL}/categories/${id}?userId=${user.uid}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ ...payload, user_id: user.uid }),
   });
   const data = await response.json();
   if (!response.ok || !data.success) {
@@ -104,7 +139,11 @@ export async function updateCategory(id: number | string, payload: { name: strin
 }
 
 export async function deleteCategory(id: number | string): Promise<{ success: boolean; message: string }> {
-  const response = await fetch(`${API_URL}/categories/${id}`, {
+  let user = auth.currentUser;
+  if (!user) user = await getCurrentUser();
+  if (!user) throw new Error("Harus login terlebih dahulu");
+
+  const response = await fetch(`${API_URL}/categories/${id}?userId=${user.uid}`, {
     method: "DELETE",
   });
   const data = await response.json();
@@ -116,6 +155,15 @@ export async function deleteCategory(id: number | string): Promise<{ success: bo
 
 // Transactions API
 export async function getTransactions(filters: TransactionFilters = {}): Promise<{ success: boolean; data: Transaction[]; total: number }> {
+  let user = auth.currentUser;
+  if (!user) {
+    user = await getCurrentUser();
+  }
+
+  if (!user) {
+    throw new Error("Harus login terlebih dahulu");
+  }
+
   const params = new URLSearchParams();
   if (filters.type) params.append("type", filters.type);
   if (filters.category_id) params.append("category_id", String(filters.category_id));
@@ -126,9 +174,13 @@ export async function getTransactions(filters: TransactionFilters = {}): Promise
   if (filters.page) params.append("page", String(filters.page));
   if (filters.limit) params.append("limit", String(filters.limit));
 
-  const url = `${API_URL}/transactions${params.toString() ? `?${params.toString()}` : ""}`;
+  // Wajib kirim userId
+  params.append("userId", user.uid);
+
+  const url = `${API_URL}/transactions?${params.toString()}`;
   const response = await fetch(url, { cache: "no-store" });
   const data = await response.json();
+
   if (!response.ok || !data.success) {
     throw new Error(data.message || "Failed to fetch transactions");
   }
@@ -136,7 +188,16 @@ export async function getTransactions(filters: TransactionFilters = {}): Promise
 }
 
 export async function getTransactionById(id: number | string): Promise<{ success: boolean; data: Transaction }> {
-  const response = await fetch(`${API_URL}/transactions/${id}`, { cache: "no-store" });
+  let user = auth.currentUser;
+  if (!user) {
+    user = await getCurrentUser();
+  }
+
+  if (!user) {
+    throw new Error("Harus login terlebih dahulu");
+  }
+
+  const response = await fetch(`${API_URL}/transactions/${id}?userId=${user.uid}`, { cache: "no-store" });
   const data = await response.json();
   if (!response.ok || !data.success) {
     throw new Error(data.message || "Failed to fetch transaction");
@@ -152,10 +213,16 @@ export async function createTransaction(payload: {
   description?: string;
   transaction_date: string;
 }): Promise<{ success: boolean; data: Transaction }> {
+  let user = auth.currentUser;
+  if (!user) {
+    user = await getCurrentUser();
+  }
+
+  if (!user) throw new Error("Harus login terlebih dahulu");
   const response = await fetch(`${API_URL}/transactions`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ ...payload, user_id: user.uid }),
   });
   const data = await response.json();
   if (!response.ok || !data.success) {
@@ -175,7 +242,13 @@ export async function updateTransaction(
     transaction_date: string;
   }>
 ): Promise<{ success: boolean; data: Transaction }> {
-  const response = await fetch(`${API_URL}/transactions/${id}`, {
+  let user = auth.currentUser;
+  if (!user) {
+    user = await getCurrentUser();
+  }
+
+  if (!user) throw new Error("Harus login terlebih dahulu");
+  const response = await fetch(`${API_URL}/transactions/${id}?userId=${user.uid}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -188,22 +261,41 @@ export async function updateTransaction(
 }
 
 export async function deleteTransaction(id: number | string): Promise<{ success: boolean; message: string }> {
-  const response = await fetch(`${API_URL}/transactions/${id}`, {
+  let user = auth.currentUser;
+  if (!user) {
+    user = await getCurrentUser();
+  }
+  if (!user) throw new Error("Harus login terlebih dahulu");
+
+  const response = await fetch(`${API_URL}/transactions/${id}?userId=${user.uid}`, {
     method: "DELETE",
   });
+
   const data = await response.json();
-  if (!response.ok || !data.success) {
-    throw new Error(data.message || "Failed to delete transaction");
-  }
+  if (!response.ok || !data.success) throw new Error(data.message || "Failed to delete transaction");
   return data;
 }
 
 // Dashboard API
 export async function getDashboard(): Promise<{ success: boolean; data: DashboardData }> {
-  const response = await fetch(`${API_URL}/dashboard`, { cache: "no-store" });
+  let user = auth.currentUser;
+  if (!user) {
+    user = await getCurrentUser();
+  }
+
+  if (!user) {
+    throw new Error("Harus login untuk melihat dashboard");
+  }
+
+  const response = await fetch(`${API_URL}/dashboard?userId=${user.uid}`, {
+    cache: "no-store"
+  });
+
   const data = await response.json();
+
   if (!response.ok || !data.success) {
     throw new Error(data.message || "Failed to fetch dashboard");
   }
+
   return data;
 }

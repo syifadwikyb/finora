@@ -1,18 +1,18 @@
 const transactionRepository = require("./transactionRepository");
 const categoryRepository = require("../Categories/categoryRepository");
 
-const getAllTransactions = async (filters = {}) => {
-  return await transactionRepository.findAllTransactions(filters);
+const getAllTransactions = async (userId, filters = {}) => {
+  return await transactionRepository.findAllTransactions(userId, filters);
 };
 
-const getTransactionById = async (id) => {
+const getTransactionById = async (id, userId) => {
   if (!id || isNaN(id)) {
     const error = new Error("Invalid transaction ID");
     error.statusCode = 400;
     throw error;
   }
 
-  const transaction = await transactionRepository.findTransactionById(id);
+  const transaction = await transactionRepository.findTransactionById(id, userId);
   if (!transaction) {
     const error = new Error("Transaction not found");
     error.statusCode = 404;
@@ -23,6 +23,12 @@ const getTransactionById = async (id) => {
 };
 
 const createTransaction = async (data) => {
+  if (!data.user_id) {
+    const error = new Error("User ID is required");
+    error.statusCode = 400;
+    throw error;
+  }
+
   if (!data.title || typeof data.title !== "string" || data.title.trim() === "") {
     const error = new Error("Title is required");
     error.statusCode = 400;
@@ -68,19 +74,20 @@ const createTransaction = async (data) => {
     category_id: Number(data.category_id),
     description: data.description ? String(data.description).trim() : null,
     transaction_date: data.transaction_date,
+    user_id: data.user_id,
   };
 
   return await transactionRepository.createTransaction(transactionData);
 };
 
-const updateTransaction = async (id, data) => {
+const updateTransaction = async (id, userId, data) => {
   if (!id || isNaN(id)) {
     const error = new Error("Invalid transaction ID");
     error.statusCode = 400;
     throw error;
   }
 
-  const existingTransaction = await transactionRepository.findTransactionById(id);
+  const existingTransaction = await transactionRepository.findTransactionById(id, userId);
   if (!existingTransaction) {
     const error = new Error("Transaction not found");
     error.statusCode = 404;
@@ -141,24 +148,24 @@ const updateTransaction = async (id, data) => {
     transaction_date: transaction_date,
   };
 
-  return await transactionRepository.updateTransaction(id, transactionData);
+  return await transactionRepository.updateTransaction(id, userId, transactionData);
 };
 
-const deleteTransaction = async (id) => {
+const deleteTransaction = async (id, userId) => {
   if (!id || isNaN(id)) {
     const error = new Error("Invalid transaction ID");
     error.statusCode = 400;
     throw error;
   }
 
-  const existingTransaction = await transactionRepository.findTransactionById(id);
+  const existingTransaction = await transactionRepository.findTransactionById(id, userId);
   if (!existingTransaction) {
     const error = new Error("Transaction not found");
     error.statusCode = 404;
     throw error;
   }
 
-  return await transactionRepository.deleteTransaction(id);
+  return await transactionRepository.deleteTransaction(id, userId);
 };
 
 module.exports = {

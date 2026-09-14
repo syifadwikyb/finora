@@ -1,20 +1,32 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { useRouter } from "next/navigation";
+
+import { DashboardData, getDashboard } from "@/lib/api";
+import { AlertCircle, RefreshCw } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import SummaryCard from "@/components/dashboard/SummaryCard";
 import RecentTransactions from "@/components/dashboard/RecentTransactions";
 import ExpenseOverview from "@/components/dashboard/ExpenseOverview";
-import { DashboardData, getDashboard } from "@/lib/api";
-import { AlertCircle, RefreshCw } from "lucide-react";
 
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [dashboardLoading, setDashboardLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.replace("/login");
+    }
+  }, [authLoading, user, router]);
+
   const fetchDashboardData = async () => {
-    setLoading(true);
+    setDashboardLoading(true);
     setError(null);
     try {
       const res = await getDashboard();
@@ -23,20 +35,39 @@ export default function DashboardPage() {
       console.error("Dashboard error:", err);
       setError(err.message || "Failed to load dashboard data. Make sure backend is running.");
     } finally {
-      setLoading(false);
+      setDashboardLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchDashboardData();
-  }, []);
+    // Hanya fetch data jika user sudah ada dan autentikasi selesai
+    if (user && !authLoading) {
+      fetchDashboardData();
+    } else if (!user) {
+      // Bersihkan data jika user logout
+      setData(null);
+    }
+  }, [user, authLoading]);
+
+  if (authLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 space-y-3">
+        <div className="w-8 h-8 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm font-medium text-slate-500">Loading...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null; // Redirecting
+  }
 
   return (
     <div className="flex-1 flex flex-col min-h-screen">
       <Navbar title="Dashboard" subtitle="Manage your money, simply." />
 
       <main className="flex-1 p-4 md:p-8 space-y-6 max-w-7xl w-full mx-auto">
-        {loading ? (
+        {dashboardLoading ? (
           <div className="flex flex-col items-center justify-center py-24 space-y-3">
             <div className="w-8 h-8 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin" />
             <p className="text-sm font-medium text-slate-500">Loading dashboard...</p>

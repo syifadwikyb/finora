@@ -1,10 +1,11 @@
 const dashboardRepository = require("./dashboardRepository");
 
-const getDashboardData = async () => {
+const getDashboardData = async (userId) => {
+  // Tambahkan userId ke dalam pemanggilan fungsi repository
   const [totals, rawExpenseOverview, recentTransactions] = await Promise.all([
-    dashboardRepository.getTotalsAndCount(),
-    dashboardRepository.getExpenseOverviewGrouped(),
-    dashboardRepository.getRecentTransactions(5),
+    dashboardRepository.getTotalsAndCount(userId),
+    dashboardRepository.getExpenseOverviewGrouped(userId),
+    dashboardRepository.getRecentTransactions(userId, 5),
   ]);
 
   const totalIncome = Number(totals.total_income) || 0;

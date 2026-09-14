@@ -36,6 +36,7 @@ export default function TransactionForm({
   const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
+    setErrorMsg("");
     if (initialData) {
       setTitle(initialData.title);
       setAmount(String(initialData.amount));

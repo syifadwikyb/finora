@@ -7,7 +7,13 @@ import CategoryForm from "@/components/categories/CategoryForm";
 import { Category, createCategory, deleteCategory, getCategories, updateCategory } from "@/lib/api";
 import { AlertCircle, Plus, RefreshCw } from "lucide-react";
 
+import { useAuth } from "@/components/auth/AuthProvider";
+import { useRouter } from "next/navigation";
+
 export default function CategoriesPage() {
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
+
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -30,6 +36,12 @@ export default function CategoriesPage() {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.replace("/login");
+    }
+  }, [authLoading, user, router]);
+
   const loadCategories = async () => {
     setLoading(true);
     setError(null);
@@ -45,8 +57,10 @@ export default function CategoriesPage() {
   };
 
   useEffect(() => {
-    loadCategories();
-  }, []);
+    if (user && !authLoading) {
+      loadCategories();
+    }
+  }, [user, authLoading]);
 
   const handleOpenAdd = () => {
     setSelectedCategory(null);
@@ -92,6 +106,19 @@ export default function CategoriesPage() {
       setDeleteLoading(false);
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center py-24 space-y-3">
+        <div className="w-8 h-8 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm font-medium text-slate-500">Loading...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="flex-1 flex flex-col min-h-screen relative">

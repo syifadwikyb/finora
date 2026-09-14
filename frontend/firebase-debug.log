@@ -1,0 +1,18 @@
+[debug] [2026-09-14T04:19:16.189Z] ----------------------------------------------------------------------
+[debug] [2026-09-14T04:19:16.208Z] Command:       C:\nvm4w\nodejs\node.exe D:\npm-cache\_npx\ba4f1959e38407b5\node_modules\firebase-tools\lib\bin\firebase.js apps:list
+[debug] [2026-09-14T04:19:16.213Z] CLI Version:   15.30.0
+[debug] [2026-09-14T04:19:16.215Z] Platform:      win32
+[debug] [2026-09-14T04:19:16.216Z] Node Version:  v23.11.1
+[debug] [2026-09-14T04:19:16.218Z] Detected Agent: antigravity
+[debug] [2026-09-14T04:19:16.218Z] Time:          Mon Sep 14 2026 11:19:16 GMT+0700 (Western Indonesia Time)
+[debug] [2026-09-14T04:19:16.219Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-09-14T04:19:16.291Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[debug] [2026-09-14T04:19:17.067Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-09-14T04:19:17.068Z] > authorizing via signed-in user (syifadwikyb@gmail.com)
+[debug] [2026-09-14T04:19:22.276Z] Error: Timed out.
+    at Timeout._onTimeout (D:\npm-cache\_npx\ba4f1959e38407b5\node_modules\firebase-tools\lib\utils.js:299:49)
+    at listOnTimeout (node:internal/timers:608:17)
+    at process.processTimers (node:internal/timers:543:7)
+[error] 
+[error] Error: An unexpected error has occurred.
