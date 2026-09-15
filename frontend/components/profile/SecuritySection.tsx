@@ -73,7 +73,7 @@ export default function SecuritySection({ user, displayName }: SecuritySectionPr
       </div>
 
       {/* Fingerprint / Biometric Section */}
-      <LockScreenSettings user={user} />
+      {/* <LockScreenSettings user={user} /> */}
       {/* Change Password Form */}
       <div className="pt-2">
         <h4 className="font-bold text-xs text-slate-900 dark:text-white mb-3">
