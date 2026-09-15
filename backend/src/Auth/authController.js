@@ -15,7 +15,7 @@ const sendVerification = async (req, res) => {
 
     // Jika link belum disediakan tetapi client menyertakan idToken, minta Firebase REST API untuk membuat oobLink
     if (!link && idToken) {
-      const apiKey = process.env.FIREBASE_WEB_API_KEY || "AIzaSyDSU1L0qrY25P8hhIWFX_OZwsqwfv0UXpk";
+      const apiKey = process.env.FIREBASE_WEB_API_KEY;
       const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
 
       try {
