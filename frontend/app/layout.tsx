@@ -3,6 +3,8 @@ import { Poppins } from "next/font/google";
 import "./globals.css";
 import Sidebar from "@/components/layout/Sidebar";
 import BottomNavbar from "@/components/layout/BottomNavbar";
+import BackNavigationHandler from "@/components/layout/BackNavigationHandler";
+import LayoutWrapper from "@/components/layout/LayoutWrapper";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 const poppins = Poppins({
   subsets: ["latin"],
@@ -42,10 +44,11 @@ export default function RootLayout({
       </head>
       <body className={`${poppins.className} min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex`}>
         <AuthProvider>
+          <BackNavigationHandler />
           <Sidebar />
-          <div className="flex-1 flex flex-col min-w-0 min-h-screen pb-20 md:pb-0">
+          <LayoutWrapper>
             {children}
-          </div>
+          </LayoutWrapper>
           <BottomNavbar />
         </AuthProvider>
       </body>

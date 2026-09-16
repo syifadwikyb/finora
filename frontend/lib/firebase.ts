@@ -1,15 +1,15 @@
 // lib/firebase.ts
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { 
-  getAuth, 
-  onAuthStateChanged, 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
+import {
+  getAuth,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   signOut,
   GoogleAuthProvider,
   signInWithPopup,
   sendEmailVerification,
-  updateProfile, 
+  updateProfile,
   updatePassword,
   EmailAuthProvider,
   reauthenticateWithCredential,
@@ -68,7 +68,7 @@ export const getAuthErrorMessage = (error: any): string => {
       return "Sesi Anda sudah lama. Silakan masukkan password saat ini untuk konfirmasi.";
     case "auth/invalid-credential":
     case "auth/wrong-password":
-      return "Password saat ini salah atau credential tidak valid.";
+      return "Email atau password salah.";
     case "auth/user-not-found":
       return "Email atau password salah.";
     case "auth/email-already-in-use":
