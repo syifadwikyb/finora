@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
 
@@ -13,6 +13,21 @@ async function hashPin(pin: string): Promise<string> {
 }
 
 export default function EnterPinPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6">
+          <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mb-3" />
+          <p className="text-slate-400 text-xs">Memuat...</p>
+        </div>
+      }
+    >
+      <EnterPinContent />
+    </Suspense>
+  );
+}
+
+function EnterPinContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect") || "/";
