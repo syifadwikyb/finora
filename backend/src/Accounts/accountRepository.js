@@ -3,7 +3,14 @@ const pool = require("../config/db");
 const findAllAccounts = async (userId) => {
   const query = `
     SELECT 
-      a.*,
+      a.id,
+      a.user_id,
+      a.name,
+      a.type,
+      a.account_number,
+      COALESCE((SELECT SUM(c.current_balance) FROM categories c WHERE c.account_id = a.id), 0)::numeric as current_balance,
+      a.created_at,
+      a.updated_at,
       COALESCE(
         (SELECT json_agg(
           json_build_object(
@@ -25,7 +32,14 @@ const findAllAccounts = async (userId) => {
 const findAccountById = async (id, userId) => {
   const query = `
     SELECT 
-      a.*,
+      a.id,
+      a.user_id,
+      a.name,
+      a.type,
+      a.account_number,
+      COALESCE((SELECT SUM(c.current_balance) FROM categories c WHERE c.account_id = a.id), 0)::numeric as current_balance,
+      a.created_at,
+      a.updated_at,
       COALESCE(
         (SELECT json_agg(
           json_build_object(

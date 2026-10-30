@@ -65,7 +65,7 @@ const getAccountsSummary = async (userId) => {
       a.id,
       a.name,
       a.type,
-      a.current_balance::numeric,
+      COALESCE((SELECT SUM(c.current_balance) FROM categories c WHERE c.account_id = a.id), 0)::numeric as current_balance,
       COALESCE(
         (SELECT json_agg(
           json_build_object(

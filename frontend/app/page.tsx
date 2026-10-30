@@ -90,7 +90,18 @@ export default function DashboardPage() {
           <>
             {/* Summary Cards Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <SummaryCard title="Total Cash Balance" amount={data.balance} type="balance" />
+              <SummaryCard
+                title="Total Cash Balance"
+                amount={
+                  data.accountsSummary && data.accountsSummary.length > 0
+                    ? data.accountsSummary.reduce((acc, a) => {
+                        const sumCat = a.categories?.reduce((s, c) => s + Number(c.current_balance || 0), 0) || 0;
+                        return acc + (sumCat > 0 ? sumCat : Number(a.current_balance || 0));
+                      }, 0)
+                    : data.balance
+                }
+                type="balance"
+              />
               <SummaryCard title="Total Income" amount={data.totalIncome} type="income" />
               <SummaryCard title="Total Expenses" amount={data.totalExpense} type="expense" />
               <SummaryCard
@@ -118,55 +129,60 @@ export default function DashboardPage() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {data.accountsSummary.map((acc) => (
-                    <div
-                      key={acc.id}
-                      className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 space-y-3"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                            <Landmark className="w-4 h-4" />
-                          </div>
-                          <div>
-                            <h4 className="font-bold text-xs text-slate-900 dark:text-white">{acc.name}</h4>
-                            <span className="text-[10px] text-slate-400 uppercase">{acc.type}</span>
-                          </div>
-                        </div>
-                        <span className="text-xs font-extrabold text-slate-900 dark:text-white">
-                          {formatCurrency(Number(acc.current_balance))}
-                        </span>
-                      </div>
+                  {data.accountsSummary.map((acc) => {
+                    const categorySum = acc.categories?.reduce((sum, cat) => sum + Number(cat.current_balance || 0), 0) || 0;
+                    const displayBalance = categorySum > 0 ? categorySum : Number(acc.current_balance || 0);
 
-                      <div className="pt-2 border-t border-slate-200/50 dark:border-slate-700/50 space-y-1.5">
-                        <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                          Categories ({acc.categories?.length || 0})
-                        </span>
-                        {acc.categories && acc.categories.length > 0 ? (
-                          <div className="space-y-1">
-                            {acc.categories.slice(0, 3).map((cat) => (
-                              <div key={cat.id} className="flex items-center justify-between text-xs">
-                                <span className="text-slate-600 dark:text-slate-300 flex items-center gap-1">
-                                  <Tags className="w-3 h-3 text-emerald-500" />
-                                  {cat.name}
-                                </span>
-                                <span className="font-semibold text-emerald-600 dark:text-emerald-400 text-[11px]">
-                                  {formatCurrency(Number(cat.current_balance || 0))}
-                                </span>
-                              </div>
-                            ))}
-                            {acc.categories.length > 3 && (
-                              <p className="text-[10px] text-slate-400 italic">
-                                +{acc.categories.length - 3} more categories...
-                              </p>
-                            )}
+                    return (
+                      <div
+                        key={acc.id}
+                        className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 space-y-3"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                              <Landmark className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <h4 className="font-bold text-xs text-slate-900 dark:text-white">{acc.name}</h4>
+                              <span className="text-[10px] text-slate-400 uppercase">{acc.type}</span>
+                            </div>
                           </div>
-                        ) : (
-                          <p className="text-[11px] text-slate-400 italic">No categories linked yet.</p>
-                        )}
+                          <span className="text-xs font-extrabold text-slate-900 dark:text-white">
+                            {formatCurrency(displayBalance)}
+                          </span>
+                        </div>
+
+                        <div className="pt-2 border-t border-slate-200/50 dark:border-slate-700/50 space-y-1.5">
+                          <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                            Categories ({acc.categories?.length || 0})
+                          </span>
+                          {acc.categories && acc.categories.length > 0 ? (
+                            <div className="space-y-1">
+                              {acc.categories.slice(0, 3).map((cat) => (
+                                <div key={cat.id} className="flex items-center justify-between text-xs">
+                                  <span className="text-slate-600 dark:text-slate-300 flex items-center gap-1">
+                                    <Tags className="w-3 h-3 text-emerald-500" />
+                                    {cat.name}
+                                  </span>
+                                  <span className="font-semibold text-emerald-600 dark:text-emerald-400 text-[11px]">
+                                    {formatCurrency(Number(cat.current_balance || 0))}
+                                  </span>
+                                </div>
+                              ))}
+                              {acc.categories.length > 3 && (
+                                <p className="text-[10px] text-slate-400 italic">
+                                  +{acc.categories.length - 3} more categories...
+                                </p>
+                              )}
+                            </div>
+                          ) : (
+                            <p className="text-[11px] text-slate-400 italic">No categories linked yet.</p>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}

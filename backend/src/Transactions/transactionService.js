@@ -93,12 +93,7 @@ const createTransaction = async (data) => {
     const createdTx = await transactionRepository.createTransaction(transactionData, client);
 
     if (data.type === "income") {
-      // 1. Akun fisik otomatis bertambah nominal penuh uang masuk
-      if (resolvedAccountId) {
-        await accountRepository.updateAccountBalance(resolvedAccountId, amount, client);
-      }
-
-      // 2. Alokasikan ke kategori-kategori
+      // Alokasikan ke kategori-kategori tujuan
       const allocations = Array.isArray(data.allocations) ? data.allocations : [];
       let totalAllocated = 0;
 
@@ -116,10 +111,7 @@ const createTransaction = async (data) => {
         await categoryRepository.updateCategoryBalance(primaryCategory.id, remainingAmount, client);
       }
     } else if (data.type === "expense") {
-      // Uang keluar memotong saldo akun fisik dan kategori terkait
-      if (resolvedAccountId) {
-        await accountRepository.updateAccountBalance(resolvedAccountId, -amount, client);
-      }
+      // Uang keluar memotong saldo kategori terkait (yang terikat pada akun tersebut)
       await categoryRepository.updateCategoryBalance(primaryCategory.id, -amount, client);
     }
 
@@ -164,19 +156,13 @@ const updateTransaction = async (id, userId, data) => {
   try {
     await client.query("BEGIN");
 
-    // Revert efek lama
+    // Revert efek saldo kategori lama
     const oldAmount = Number(existingTransaction.amount);
     if (existingTransaction.type === "income") {
-      if (existingTransaction.account_id) {
-        await accountRepository.updateAccountBalance(existingTransaction.account_id, -oldAmount, client);
-      }
       if (existingTransaction.category_id) {
         await categoryRepository.updateCategoryBalance(existingTransaction.category_id, -oldAmount, client);
       }
     } else if (existingTransaction.type === "expense") {
-      if (existingTransaction.account_id) {
-        await accountRepository.updateAccountBalance(existingTransaction.account_id, oldAmount, client);
-      }
       if (existingTransaction.category_id) {
         await categoryRepository.updateCategoryBalance(existingTransaction.category_id, oldAmount, client);
       }
@@ -196,18 +182,12 @@ const updateTransaction = async (id, userId, data) => {
 
     const updatedTx = await transactionRepository.updateTransaction(id, userId, updateData, client);
 
-    // Terapkan efek baru
+    // Terapkan efek saldo kategori baru
     if (type === "income") {
-      if (accountId) {
-        await accountRepository.updateAccountBalance(accountId, amount, client);
-      }
       if (categoryId) {
         await categoryRepository.updateCategoryBalance(categoryId, amount, client);
       }
     } else if (type === "expense") {
-      if (accountId) {
-        await accountRepository.updateAccountBalance(accountId, -amount, client);
-      }
       if (categoryId) {
         await categoryRepository.updateCategoryBalance(categoryId, -amount, client);
       }
@@ -243,16 +223,10 @@ const deleteTransaction = async (id, userId) => {
 
     const amount = Number(existingTransaction.amount);
     if (existingTransaction.type === "income") {
-      if (existingTransaction.account_id) {
-        await accountRepository.updateAccountBalance(existingTransaction.account_id, -amount, client);
-      }
       if (existingTransaction.category_id) {
         await categoryRepository.updateCategoryBalance(existingTransaction.category_id, -amount, client);
       }
     } else if (existingTransaction.type === "expense") {
-      if (existingTransaction.account_id) {
-        await accountRepository.updateAccountBalance(existingTransaction.account_id, amount, client);
-      }
       if (existingTransaction.category_id) {
         await categoryRepository.updateCategoryBalance(existingTransaction.category_id, amount, client);
       }

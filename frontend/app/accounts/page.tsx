@@ -25,7 +25,6 @@ export default function AccountsPage() {
     name: "",
     type: "bank",
     account_number: "",
-    current_balance: "",
   });
   const [formError, setFormError] = useState("");
 
@@ -67,7 +66,7 @@ export default function AccountsPage() {
 
   const handleOpenAdd = () => {
     setSelectedAccount(null);
-    setFormData({ name: "", type: "bank", account_number: "", current_balance: "0" });
+    setFormData({ name: "", type: "bank", account_number: "" });
     setFormError("");
     setIsModalOpen(true);
   };
@@ -78,7 +77,6 @@ export default function AccountsPage() {
       name: acc.name,
       type: acc.type || "bank",
       account_number: acc.account_number || "",
-      current_balance: String(acc.current_balance),
     });
     setFormError("");
     setIsModalOpen(true);
@@ -106,7 +104,7 @@ export default function AccountsPage() {
           name: formData.name.trim(),
           type: formData.type,
           account_number: formData.account_number.trim() || undefined,
-          current_balance: Number(formData.current_balance) || 0,
+          current_balance: 0,
         });
         showToast("New account added successfully.");
       }
@@ -134,7 +132,12 @@ export default function AccountsPage() {
     }
   };
 
-  const totalBalance = accounts.reduce((acc, curr) => acc + Number(curr.current_balance || 0), 0);
+  const getAccountEffectiveBalance = (acc: Account) => {
+    const sumCat = acc.categories?.reduce((s, c) => s + Number(c.current_balance || 0), 0) || 0;
+    return sumCat > 0 ? sumCat : Number(acc.current_balance || 0);
+  };
+
+  const totalBalance = accounts.reduce((acc, curr) => acc + getAccountEffectiveBalance(curr), 0);
 
   if (authLoading) {
     return (
@@ -149,7 +152,7 @@ export default function AccountsPage() {
 
   return (
     <div className="flex-1 flex flex-col min-h-screen relative pb-16">
-      <Navbar title="Accounts" subtitle="Physical money storage (Bank, E-Wallet, Cash)." />
+      <Navbar title="Accounts" subtitle="Physical money storage. Balance is computed from linked envelope categories." />
 
       {toastMessage && (
         <div className="fixed bottom-5 right-5 z-50 bg-emerald-700 text-white text-xs font-semibold px-4 py-3 rounded-xl shadow-xl">
@@ -163,7 +166,7 @@ export default function AccountsPage() {
           <div>
             <span className="text-xs font-semibold uppercase tracking-wider text-emerald-300">Total Cash Balance</span>
             <h2 className="text-2xl md:text-3xl font-extrabold mt-1">{formatCurrency(totalBalance)}</h2>
-            <p className="text-xs text-emerald-200/80 mt-1">Across {accounts.length} accounts</p>
+            <p className="text-xs text-emerald-200/80 mt-1">Sum of all linked category allocations across {accounts.length} accounts</p>
           </div>
           <button
             onClick={handleOpenAdd}
@@ -211,6 +214,8 @@ export default function AccountsPage() {
             {accounts.map((acc) => {
               const Icon = acc.type === "ewallet" ? Wallet : acc.type === "cash" ? Coins : Landmark;
               const catCount = acc.categories ? acc.categories.length : 0;
+              const displayBalance = getAccountEffectiveBalance(acc);
+
               return (
                 <div
                   key={acc.id}
@@ -246,9 +251,9 @@ export default function AccountsPage() {
                     </div>
 
                     <div className="mt-5">
-                      <span className="text-[11px] text-slate-400">Balance</span>
+                      <span className="text-[11px] text-slate-400">Total Balance (Sum of Envelopes)</span>
                       <p className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">
-                        {formatCurrency(Number(acc.current_balance))}
+                        {formatCurrency(displayBalance)}
                       </p>
                     </div>
                   </div>
@@ -334,19 +339,9 @@ export default function AccountsPage() {
                 </div>
               </div>
 
-              {!selectedAccount && (
-                <div>
-                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Starting Balance (Rp)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    placeholder="0"
-                    value={formData.current_balance}
-                    onChange={(e) => setFormData({ ...formData, current_balance: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white"
-                  />
-                </div>
-              )}
+              <p className="text-[11px] text-slate-500 bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                💡 Account balance will automatically reflect the sum of all category allocations linked to this account.
+              </p>
 
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
                 <button
