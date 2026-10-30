@@ -84,10 +84,10 @@ export default function LoginPage() {
             </div>
           </div>
           <h1 className="text-3xl font-extrabold text-white tracking-tight">
-            Selamat Datang
+            Welcome
           </h1>
           <p className="mt-2 text-emerald-100/80 text-sm">
-            Masuk ke akun <span className="font-semibold text-white">Finora</span> Anda
+            Log in to your <span className="font-semibold text-white">Finora</span> account
           </p>
         </div>
 
@@ -122,7 +122,7 @@ export default function LoginPage() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="nama@email.com"
+                    placeholder="name@email.com"
                     className="w-full pl-10 pr-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all text-sm"
                   />
                 </div>
@@ -140,7 +140,7 @@ export default function LoginPage() {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Masukkan password"
+                    placeholder="password"
                     className="w-full pl-10 pr-11 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all text-sm"
                   />
                   <button
@@ -163,10 +163,10 @@ export default function LoginPage() {
                 {submitting ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Masuk...
+                    Sign in...
                   </>
                 ) : (
-                  "Masuk"
+                  "Sign in"
                 )}
               </button>
             </form>
@@ -174,7 +174,7 @@ export default function LoginPage() {
             {/* Divider */}
             <div className="my-5 flex items-center gap-3">
               <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
-              <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">atau</span>
+              <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">or</span>
               <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
             </div>
 
@@ -190,14 +190,14 @@ export default function LoginPage() {
                 <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
               </svg>
-              Masuk dengan Google
+              Sign in with Google
             </button>
 
             {/* Register Link */}
             <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
-              Belum punya akun?{" "}
+              Don't have an account?{" "}
               <Link href="/register" className="font-semibold text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 transition-colors">
-                Daftar sekarang
+                Sign up
               </Link>
             </p>
           </div>

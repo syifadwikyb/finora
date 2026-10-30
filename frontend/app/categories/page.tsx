@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Navbar from "@/components/layout/Navbar";
 import CategoryList from "@/components/categories/CategoryList";
 import CategoryForm from "@/components/categories/CategoryForm";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 import { Account, Category, createCategory, deleteCategory, getAccounts, getCategories, updateCategory } from "@/lib/api";
 import { AlertCircle, Plus, RefreshCw } from "lucide-react";
 
@@ -27,7 +28,6 @@ export default function CategoriesPage() {
   // Delete Confirmation state
   const [deleteTarget, setDeleteTarget] = useState<Category | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   // Toast message
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -99,14 +99,13 @@ export default function CategoriesPage() {
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
     setDeleteLoading(true);
-    setDeleteError(null);
     try {
       await deleteCategory(deleteTarget.id);
       showToast("Category deleted.");
       setDeleteTarget(null);
       loadData();
     } catch (err: any) {
-      setDeleteError(err.message || "Failed to delete category");
+      showToast(err.message || "Failed to delete category");
     } finally {
       setDeleteLoading(false);
     }
@@ -177,10 +176,7 @@ export default function CategoriesPage() {
           <CategoryList
             categories={categories}
             onEdit={handleOpenEdit}
-            onDelete={(cat) => {
-              setDeleteError(null);
-              setDeleteTarget(cat);
-            }}
+            onDelete={(cat) => setDeleteTarget(cat)}
           />
         )}
       </main>
@@ -195,40 +191,21 @@ export default function CategoriesPage() {
         loading={modalLoading}
       />
 
-      {/* Delete Confirmation Modal */}
-      {deleteTarget && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-md rounded-2xl p-6 shadow-2xl space-y-4 animate-in zoom-in-95 duration-150">
-            <h3 className="font-semibold text-base text-slate-900 dark:text-white">Delete Category</h3>
-            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              Are you sure you want to delete <span className="font-semibold text-slate-900 dark:text-white">"{deleteTarget.name}"</span>?
-            </p>
-
-            {deleteError && (
-              <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 text-rose-600 text-xs font-medium">
-                {deleteError}
-              </div>
-            )}
-
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
-              <button
-                onClick={() => setDeleteTarget(null)}
-                disabled={deleteLoading}
-                className="px-4 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDeleteConfirm}
-                disabled={deleteLoading}
-                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold transition-colors disabled:opacity-50 cursor-pointer"
-              >
-                {deleteLoading ? "Deleting..." : "Confirm Delete"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Consistent Delete Confirm Modal */}
+      <ConfirmModal
+        isOpen={Boolean(deleteTarget)}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Category"
+        description={
+          <>
+            Are you sure you want to delete <span className="font-semibold text-slate-900 dark:text-white">"{deleteTarget?.name}"</span>?
+          </>
+        }
+        confirmLabel="Delete Category"
+        variant="danger"
+        loading={deleteLoading}
+      />
     </div>
   );
 }

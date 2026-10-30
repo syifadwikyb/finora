@@ -158,8 +158,8 @@ export default function TransactionForm({
           type="button"
           onClick={() => setType("expense")}
           className={`py-2 rounded-lg font-semibold transition-all cursor-pointer ${type === "expense"
-              ? "bg-rose-600 text-white shadow-xs"
-              : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+            ? "bg-rose-600 text-white shadow-xs"
+            : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
             }`}
         >
           Expense (Money Out)
@@ -168,8 +168,8 @@ export default function TransactionForm({
           type="button"
           onClick={() => setType("income")}
           className={`py-2 rounded-lg font-semibold transition-all cursor-pointer ${type === "income"
-              ? "bg-emerald-600 text-white shadow-xs"
-              : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+            ? "bg-emerald-600 text-white shadow-xs"
+            : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
             }`}
         >
           Income (Money In)
@@ -225,33 +225,6 @@ export default function TransactionForm({
             ))}
           </select>
         </div>
-      </div>
-
-      {/* Auto-detected account preview */}
-      <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Landmark className="w-4 h-4 text-emerald-600 shrink-0" />
-          <div>
-            <span className="text-[10px] uppercase font-bold text-slate-400">Linked Account:</span>
-            <p className="font-semibold text-slate-900 dark:text-white text-xs">
-              {linkedAccount ? (
-                <>
-                  {linkedAccount.name}{" "}
-                  <span className="text-[10px] text-slate-400 font-normal">
-                    ({linkedAccount.type}) • Balance: Rp {Number(linkedAccount.current_balance).toLocaleString("id-ID")}
-                  </span>
-                </>
-              ) : (
-                <span className="text-slate-400 font-normal">
-                  Category not linked to a specific account
-                </span>
-              )}
-            </p>
-          </div>
-        </div>
-        <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
-          Auto
-        </span>
       </div>
 
       {/* Allocation section for income */}

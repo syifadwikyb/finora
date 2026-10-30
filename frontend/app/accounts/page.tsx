@@ -7,6 +7,7 @@ import Navbar from "@/components/layout/Navbar";
 import { Account, createAccount, deleteAccount, getAccounts, updateAccount } from "@/lib/api";
 import { formatCurrency } from "@/lib/utils";
 import { Landmark, Plus, Trash2, Edit2, AlertCircle, RefreshCw, X, Wallet, Coins, Tags } from "lucide-react";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 
 export default function AccountsPage() {
   const { user, loading: authLoading } = useAuth();
@@ -27,6 +28,10 @@ export default function AccountsPage() {
     current_balance: "",
   });
   const [formError, setFormError] = useState("");
+
+  // Delete confirmation modal state
+  const [deleteTarget, setDeleteTarget] = useState<Account | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   // Toast
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -114,14 +119,18 @@ export default function AccountsPage() {
     }
   };
 
-  const handleDelete = async (acc: Account) => {
-    if (!confirm(`Delete account "${acc.name}"?`)) return;
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
+    setDeleteLoading(true);
     try {
-      await deleteAccount(acc.id);
+      await deleteAccount(deleteTarget.id);
       showToast("Account deleted.");
+      setDeleteTarget(null);
       loadAccounts();
     } catch (err: any) {
-      alert(err.message || "Failed to delete account");
+      showToast(err.message || "Failed to delete account");
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -228,7 +237,7 @@ export default function AccountsPage() {
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => handleDelete(acc)}
+                          onClick={() => setDeleteTarget(acc)}
                           className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -360,6 +369,22 @@ export default function AccountsPage() {
           </div>
         </div>
       )}
+
+      {/* Consistent Confirm Modal for Delete */}
+      <ConfirmModal
+        isOpen={Boolean(deleteTarget)}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Account"
+        description={
+          <>
+            Are you sure you want to delete <span className="font-semibold text-slate-900 dark:text-white">"{deleteTarget?.name}"</span>? Linked categories and transactions will lose this account link.
+          </>
+        }
+        confirmLabel="Delete Account"
+        variant="danger"
+        loading={deleteLoading}
+      />
     </div>
   );
 }

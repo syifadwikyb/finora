@@ -96,10 +96,10 @@ export default function RegisterPage() {
             </div>
           </div>
           <h1 className="text-3xl font-extrabold text-white tracking-tight">
-            Buat Akun Baru
+            Create New Account
           </h1>
           <p className="mt-2 text-teal-100/80 text-sm">
-            Bergabung dengan <span className="font-semibold text-white">Finora</span> hari ini
+            Join <span className="font-semibold text-white">Finora</span> today
           </p>
         </div>
 
@@ -134,7 +134,7 @@ export default function RegisterPage() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="nama@email.com"
+                    placeholder="name@email.com"
                     className="w-full pl-10 pr-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all text-sm"
                   />
                 </div>
@@ -152,7 +152,7 @@ export default function RegisterPage() {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Minimal 6 karakter"
+                    placeholder="Minimum 6 characters"
                     className="w-full pl-10 pr-11 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all text-sm"
                   />
                   <button
@@ -169,7 +169,7 @@ export default function RegisterPage() {
               {/* Confirm Password Field */}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                  Konfirmasi Password
+                  Confirm Password
                 </label>
                 <div className="relative">
                   <ShieldCheck className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500 pointer-events-none" />
@@ -178,7 +178,7 @@ export default function RegisterPage() {
                     required
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Ulangi password"
+                    placeholder="Re-enter your password"
                     className="w-full pl-10 pr-11 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all text-sm"
                   />
                   <button
@@ -201,10 +201,10 @@ export default function RegisterPage() {
                 {submitting ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Mendaftar...
+                    Sign up...
                   </>
                 ) : (
-                  "Daftar Sekarang"
+                  "Sign up"
                 )}
               </button>
             </form>
@@ -212,7 +212,7 @@ export default function RegisterPage() {
             {/* Divider */}
             <div className="my-5 flex items-center gap-3">
               <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
-              <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">atau</span>
+              <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">or</span>
               <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
             </div>
 
@@ -228,14 +228,14 @@ export default function RegisterPage() {
                 <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
               </svg>
-              Daftar dengan Google
+              Sign in with Google
             </button>
 
             {/* Login Link */}
             <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
-              Sudah punya akun?{" "}
+              Already have an account?{" "}
               <Link href="/login" className="font-semibold text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 transition-colors">
-                Masuk di sini
+                Sign in
               </Link>
             </p>
           </div>
