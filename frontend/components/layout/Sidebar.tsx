@@ -14,7 +14,7 @@ const navItems = [
 export default function Sidebar() {
   const pathname = usePathname();
 
-  if (pathname === '/login' || pathname === '/register') return null;
+  if (pathname === '/login' || pathname === '/register' || pathname === '/enter-pin') return null;
 
   return (
     <aside className="hidden md:flex flex-col w-64 border-r border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 h-screen sticky top-0 self-start shrink-0 z-30 overflow-y-auto">

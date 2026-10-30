@@ -86,6 +86,7 @@ const createTransaction = async (data) => {
       account_id: resolvedAccountId,
       allocation_id: null,
       description: data.description ? String(data.description).trim() : null,
+      allocations: data.type === "income" ? (Array.isArray(data.allocations) ? data.allocations : []) : null,
       transaction_date: data.transaction_date,
       user_id: data.user_id,
     };
@@ -156,17 +157,32 @@ const updateTransaction = async (id, userId, data) => {
   try {
     await client.query("BEGIN");
 
-    // Revert efek saldo kategori lama
+    // 1. Revert efek saldo transaksi lama
     const oldAmount = Number(existingTransaction.amount);
     if (existingTransaction.type === "income") {
-      if (existingTransaction.category_id) {
-        await categoryRepository.updateCategoryBalance(existingTransaction.category_id, -oldAmount, client);
+      const oldAllocations = Array.isArray(existingTransaction.allocations) ? existingTransaction.allocations : [];
+      let oldAllocatedTotal = 0;
+      for (const item of oldAllocations) {
+        const itemAmount = Number(item.amount) || 0;
+        if (itemAmount > 0 && item.category_id) {
+          oldAllocatedTotal += itemAmount;
+          await categoryRepository.updateCategoryBalance(item.category_id, -itemAmount, client);
+        }
+      }
+      const oldRemaining = oldAmount - oldAllocatedTotal;
+      if (oldRemaining > 0 && existingTransaction.category_id) {
+        await categoryRepository.updateCategoryBalance(existingTransaction.category_id, -oldRemaining, client);
       }
     } else if (existingTransaction.type === "expense") {
       if (existingTransaction.category_id) {
         await categoryRepository.updateCategoryBalance(existingTransaction.category_id, oldAmount, client);
       }
     }
+
+    // 2. Tentukan data alokasi baru
+    const newAllocations = type === "income"
+      ? (data.allocations !== undefined ? (Array.isArray(data.allocations) ? data.allocations : []) : (Array.isArray(existingTransaction.allocations) ? existingTransaction.allocations : []))
+      : null;
 
     // Update data transaksi
     const updateData = {
@@ -177,15 +193,25 @@ const updateTransaction = async (id, userId, data) => {
       account_id: accountId,
       allocation_id: null,
       description: data.description !== undefined ? (data.description ? String(data.description).trim() : null) : existingTransaction.description,
+      allocations: newAllocations,
       transaction_date: data.transaction_date || existingTransaction.transaction_date,
     };
 
     const updatedTx = await transactionRepository.updateTransaction(id, userId, updateData, client);
 
-    // Terapkan efek saldo kategori baru
+    // 3. Terapkan efek saldo baru
     if (type === "income") {
-      if (categoryId) {
-        await categoryRepository.updateCategoryBalance(categoryId, amount, client);
+      let newAllocatedTotal = 0;
+      for (const item of (newAllocations || [])) {
+        const itemAmount = Number(item.amount) || 0;
+        if (itemAmount > 0 && item.category_id) {
+          newAllocatedTotal += itemAmount;
+          await categoryRepository.updateCategoryBalance(item.category_id, itemAmount, client);
+        }
+      }
+      const newRemaining = amount - newAllocatedTotal;
+      if (newRemaining > 0 && categoryId) {
+        await categoryRepository.updateCategoryBalance(categoryId, newRemaining, client);
       }
     } else if (type === "expense") {
       if (categoryId) {
@@ -223,8 +249,18 @@ const deleteTransaction = async (id, userId) => {
 
     const amount = Number(existingTransaction.amount);
     if (existingTransaction.type === "income") {
-      if (existingTransaction.category_id) {
-        await categoryRepository.updateCategoryBalance(existingTransaction.category_id, -amount, client);
+      const oldAllocations = Array.isArray(existingTransaction.allocations) ? existingTransaction.allocations : [];
+      let oldAllocatedTotal = 0;
+      for (const item of oldAllocations) {
+        const itemAmount = Number(item.amount) || 0;
+        if (itemAmount > 0 && item.category_id) {
+          oldAllocatedTotal += itemAmount;
+          await categoryRepository.updateCategoryBalance(item.category_id, -itemAmount, client);
+        }
+      }
+      const oldRemaining = amount - oldAllocatedTotal;
+      if (oldRemaining > 0 && existingTransaction.category_id) {
+        await categoryRepository.updateCategoryBalance(existingTransaction.category_id, -oldRemaining, client);
       }
     } else if (existingTransaction.type === "expense") {
       if (existingTransaction.category_id) {

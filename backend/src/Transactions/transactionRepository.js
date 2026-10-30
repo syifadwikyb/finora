@@ -62,6 +62,7 @@ const findAllTransactions = async (userId, filters = {}) => {
       t.account_id,
       t.allocation_id,
       t.description,
+      t.allocations,
       t.transaction_date,
       t.created_at,
       CASE 
@@ -114,6 +115,7 @@ const findTransactionById = async (id, userId, client = pool) => {
       t.account_id,
       t.allocation_id,
       t.description,
+      t.allocations,
       t.transaction_date,
       t.created_at,
       CASE 
@@ -140,8 +142,8 @@ const findTransactionById = async (id, userId, client = pool) => {
 
 const createTransaction = async (data, client = pool) => {
   const insertQuery = `
-    INSERT INTO transactions (title, amount, type, category_id, account_id, allocation_id, description, transaction_date, user_id)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    INSERT INTO transactions (title, amount, type, category_id, account_id, allocation_id, description, allocations, transaction_date, user_id)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
     RETURNING id
   `;
   const values = [
@@ -152,6 +154,7 @@ const createTransaction = async (data, client = pool) => {
     data.account_id || null,
     data.allocation_id || null,
     data.description || null,
+    data.allocations ? JSON.stringify(data.allocations) : null,
     data.transaction_date,
     data.user_id,
   ];
@@ -163,8 +166,8 @@ const createTransaction = async (data, client = pool) => {
 const updateTransaction = async (id, userId, data, client = pool) => {
   const updateQuery = `
     UPDATE transactions
-    SET title = $1, amount = $2, type = $3, category_id = $4, account_id = $5, allocation_id = $6, description = $7, transaction_date = $8
-    WHERE id = $9 AND user_id = $10
+    SET title = $1, amount = $2, type = $3, category_id = $4, account_id = $5, allocation_id = $6, description = $7, allocations = $8, transaction_date = $9
+    WHERE id = $10 AND user_id = $11
     RETURNING id
   `;
   const values = [
@@ -175,6 +178,7 @@ const updateTransaction = async (id, userId, data, client = pool) => {
     data.account_id || null,
     data.allocation_id || null,
     data.description || null,
+    data.allocations !== undefined ? (data.allocations ? JSON.stringify(data.allocations) : null) : null,
     data.transaction_date,
     id,
     userId,

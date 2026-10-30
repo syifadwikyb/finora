@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Fingerprint } from "lucide-react";
+import { useState } from "react";
 import { User } from "firebase/auth";
 
 interface LockScreenProps {
@@ -20,56 +19,7 @@ async function hashPin(pin: string): Promise<string> {
 export default function LockScreen({ user, onUnlock }: LockScreenProps) {
   const [pin, setPin] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [lockMethod, setLockMethod] = useState<"pin" | "biometric">("pin");
   const [verifying, setVerifying] = useState(false);
-
-  useEffect(() => {
-    const method = localStorage.getItem(`finora_lock_method_${user.uid}`);
-    if (method === "biometric") {
-      setLockMethod("biometric");
-      handleBiometricUnlock();
-    } else {
-      setLockMethod("pin");
-    }
-  }, [user.uid]);
-
-  const handleBiometricUnlock = async () => {
-    setVerifying(true);
-    setError(null);
-
-    try {
-      if (!window.PublicKeyCredential || !navigator.credentials) {
-        setError("Biometrics not supported on this browser.");
-        setVerifying(false);
-        return;
-      }
-
-      const challenge = new Uint8Array(32);
-      window.crypto.getRandomValues(challenge);
-
-      const assertion = await navigator.credentials.get({
-        publicKey: {
-          challenge,
-          rpId: window.location.hostname,
-          userVerification: "required",
-          timeout: 60000,
-        },
-      });
-
-      if (assertion) {
-        localStorage.setItem(`finora_last_active_${user.uid}`, Date.now().toString());
-        onUnlock();
-      }
-    } catch (err: any) {
-      if (err.name === "NotAllowedError") {
-        setError("Biometric verification cancelled.");
-      } else {
-        setError("Biometric verification failed. Try again.");
-      }
-    } finally {
-      setVerifying(false);
-    }
-  };
 
   const handlePinKeyDown = (digit: string) => {
     if (pin.length < 4) {
@@ -79,19 +29,25 @@ export default function LockScreen({ user, onUnlock }: LockScreenProps) {
 
       if (newPin.length === 4) {
         setTimeout(async () => {
-          const storedHash = localStorage.getItem(`finora_lock_pin_${user.uid}`);
-          // If no PIN set, allow unlock or match
-          if (!storedHash) {
-            onUnlock();
-            return;
-          }
-          const inputHash = await hashPin(newPin);
-          if (inputHash === storedHash) {
-            localStorage.setItem(`finora_last_active_${user.uid}`, Date.now().toString());
-            onUnlock();
-          } else {
-            setError("Incorrect PIN. Try again.");
-            setPin("");
+          setVerifying(true);
+          try {
+            const storedHash = localStorage.getItem(`finora_lock_pin_${user.uid}`);
+            if (!storedHash) {
+              document.cookie = "finora_pin_verified=true; path=/; SameSite=Lax";
+              onUnlock();
+              return;
+            }
+            const inputHash = await hashPin(newPin);
+            if (inputHash === storedHash) {
+              localStorage.setItem(`finora_last_active_${user.uid}`, Date.now().toString());
+              document.cookie = "finora_pin_verified=true; path=/; SameSite=Lax";
+              onUnlock();
+            } else {
+              setError("Incorrect PIN. Try again.");
+              setPin("");
+            }
+          } finally {
+            setVerifying(false);
           }
         }, 150);
       }
@@ -119,79 +75,46 @@ export default function LockScreen({ user, onUnlock }: LockScreenProps) {
         </p>
       </div>
 
-      {lockMethod === "pin" ? (
-        <div className="w-full max-w-xs space-y-6">
-          <p className="text-center text-sm text-slate-400">Enter 4-digit PIN</p>
+      <div className="w-full max-w-xs space-y-6">
+        <p className="text-center text-sm text-slate-400">Enter 4-digit PIN</p>
 
-          <div className="flex justify-center gap-4">
-            {[0, 1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className={`w-4 h-4 rounded-full transition-all duration-200 ${
-                  i < pin.length
-                    ? "bg-emerald-500 scale-110 shadow-lg shadow-emerald-500/50"
-                    : "bg-slate-700 border border-slate-600"
-                }`}
-              />
-            ))}
-          </div>
-
-          {error && (
-            <p className="text-center text-xs text-rose-400 font-medium animate-pulse">{error}</p>
-          )}
-
-          <div className="grid grid-cols-3 gap-3 max-w-[240px] mx-auto">
-            {["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "⌫"].map((key, idx) => {
-              if (key === "") return <div key={idx} />;
-              return (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => (key === "⌫" ? handlePinBackspace() : handlePinKeyDown(key))}
-                  disabled={verifying}
-                  className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 text-white text-xl font-semibold
-                    hover:bg-white/10 active:bg-white/20 active:scale-95
-                    transition-all duration-150 disabled:opacity-50
-                    flex items-center justify-center mx-auto"
-                >
-                  {key}
-                </button>
-              );
-            })}
-          </div>
+        <div className="flex justify-center gap-4">
+          {[0, 1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className={`w-4 h-4 rounded-full transition-all duration-200 ${
+                i < pin.length
+                  ? "bg-emerald-500 scale-110 shadow-lg shadow-emerald-500/50"
+                  : "bg-slate-700 border border-slate-600"
+              }`}
+            />
+          ))}
         </div>
-      ) : (
-        <div className="w-full max-w-xs space-y-6 text-center">
-          <p className="text-sm text-slate-400">Verify your identity</p>
 
-          <button
-            type="button"
-            onClick={handleBiometricUnlock}
-            disabled={verifying}
-            className="mx-auto w-24 h-24 rounded-3xl bg-emerald-600/20 border-2 border-emerald-500/30 flex items-center justify-center
-              hover:bg-emerald-600/30 active:scale-95 transition-all duration-200 disabled:opacity-50 cursor-pointer"
-          >
-            <Fingerprint className={`w-12 h-12 text-emerald-400 ${verifying ? "animate-pulse" : ""}`} />
-          </button>
+        {error && (
+          <p className="text-center text-xs text-rose-400 font-medium animate-pulse">{error}</p>
+        )}
 
-          <p className="text-xs text-slate-500">
-            {verifying ? "Verifying..." : "Touch fingerprint sensor to unlock"}
-          </p>
-
-          {error && (
-            <div className="space-y-2">
-              <p className="text-xs text-rose-400 font-medium">{error}</p>
+        <div className="grid grid-cols-3 gap-3 max-w-[240px] mx-auto">
+          {["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "⌫"].map((key, idx) => {
+            if (key === "") return <div key={idx} />;
+            return (
               <button
+                key={idx}
                 type="button"
-                onClick={handleBiometricUnlock}
-                className="text-xs text-emerald-400 hover:text-emerald-300 underline transition-colors"
+                onClick={() => (key === "⌫" ? handlePinBackspace() : handlePinKeyDown(key))}
+                disabled={verifying}
+                className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 text-white text-xl font-semibold
+                  hover:bg-white/10 active:bg-white/20 active:scale-95
+                  transition-all duration-150 disabled:opacity-50
+                  flex items-center justify-center mx-auto cursor-pointer"
               >
-                Try again
+                {key}
               </button>
-            </div>
-          )}
+            );
+          })}
         </div>
-      )}
+      </div>
     </div>
   );
 }

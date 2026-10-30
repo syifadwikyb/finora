@@ -48,6 +48,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setUser(null);
         setIsLocked(false);
+        // Hapus cookie verifikasi pin saat user logout
+        document.cookie = "finora_pin_verified=; path=/; max-age=0; SameSite=Lax";
       }
       setLoading(false);
     });
@@ -62,7 +64,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const resetTimer = () => {
       clearTimeout(timer);
-      timer = setTimeout(() => setIsLocked(true), IDLE_MS);
+      timer = setTimeout(() => {
+        setIsLocked(true);
+        // Reset cookie agar jika di-refresh otomatis harus masukkan PIN lagi
+        document.cookie = "finora_pin_verified=; path=/; max-age=0; SameSite=Lax";
+      }, IDLE_MS);
     };
 
     const events = ["mousemove", "keydown", "click", "touchstart", "scroll"];
@@ -77,12 +83,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const unlock = useCallback(() => {
     setIsLocked(false);
+    document.cookie = "finora_pin_verified=true; path=/; SameSite=Lax";
   }, []);
 
   const handleLogout = async () => {
     await logout();
     setUser(null);
     setIsLocked(false);
+    document.cookie = "finora_pin_verified=; path=/; max-age=0; SameSite=Lax";
     router.push("/login");
   };
 

@@ -62,14 +62,14 @@ export default function SecuritySection({ user }: SecuritySectionProps) {
         </div>
         <div>
           <h3 className="font-bold text-base text-slate-900 dark:text-white">Security & Login</h3>
-          <p className="text-xs text-slate-500">Auto-lock & device authentication</p>
+          <p className="text-xs text-slate-500">PIN verification & password management</p>
         </div>
       </div>
 
-      {/* Lock Screen & Biometrics */}
+      {/* App PIN Lock Settings */}
       <div>
         <h4 className="font-semibold text-xs text-slate-900 dark:text-white mb-2">
-          App Lock & Biometrics
+          Security PIN
         </h4>
         <LockScreenSettings user={user} />
       </div>

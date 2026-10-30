@@ -43,14 +43,26 @@ export default function TransactionForm({
   useEffect(() => {
     setErrorMsg("");
     if (initialData) {
-      setTitle(initialData.title);
-      setAmount(String(initialData.amount));
-      setType(initialData.type);
-      setCategoryId(initialData.category_id ? String(initialData.category_id) : "");
+      setTitle(initialData.title || "");
+      setAmount(initialData.amount !== undefined && initialData.amount !== null ? String(initialData.amount) : "");
+      setType(initialData.type || "expense");
+      setCategoryId(initialData.category_id ? String(initialData.category_id) : (categories.length > 0 ? String(categories[0].id) : ""));
       setDescription(initialData.description || "");
       setTransactionDate(initialData.transaction_date ? initialData.transaction_date.split("T")[0] : today);
-      setAllocations([]);
+      
+      // Pertahankan history alokasi kategori yang sudah terhubung sebelumnya
+      if (initialData.type === "income" && Array.isArray(initialData.allocations) && initialData.allocations.length > 0) {
+        setAllocations(
+          initialData.allocations.map((a) => ({
+            category_id: String(a.category_id),
+            amount: a.amount !== undefined && a.amount !== null ? String(a.amount) : "",
+          }))
+        );
+      } else {
+        setAllocations([]);
+      }
     } else {
+      // Form tambah transaksi baru: bersih tanpa memuat nominal atau data transaksi lama
       setTitle("");
       setAmount("");
       setType("expense");
@@ -157,20 +169,22 @@ export default function TransactionForm({
         <button
           type="button"
           onClick={() => setType("expense")}
-          className={`py-2 rounded-lg font-semibold transition-all cursor-pointer ${type === "expense"
-            ? "bg-rose-600 text-white shadow-xs"
-            : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
-            }`}
+          className={`py-2 rounded-lg font-semibold transition-all cursor-pointer ${
+            type === "expense"
+              ? "bg-rose-600 text-white shadow-xs"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+          }`}
         >
           Expense (Money Out)
         </button>
         <button
           type="button"
           onClick={() => setType("income")}
-          className={`py-2 rounded-lg font-semibold transition-all cursor-pointer ${type === "income"
-            ? "bg-emerald-600 text-white shadow-xs"
-            : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
-            }`}
+          className={`py-2 rounded-lg font-semibold transition-all cursor-pointer ${
+            type === "income"
+              ? "bg-emerald-600 text-white shadow-xs"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+          }`}
         >
           Income (Money In)
         </button>
@@ -212,7 +226,6 @@ export default function TransactionForm({
             value={categoryId}
             onChange={(e) => {
               setCategoryId(e.target.value);
-              setAllocations([]);
             }}
             className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
             required
@@ -225,6 +238,33 @@ export default function TransactionForm({
             ))}
           </select>
         </div>
+      </div>
+
+      {/* Auto-detected account preview */}
+      <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Landmark className="w-4 h-4 text-emerald-600 shrink-0" />
+          <div>
+            <span className="text-[10px] uppercase font-bold text-slate-400">Linked Account:</span>
+            <p className="font-semibold text-slate-900 dark:text-white text-xs">
+              {linkedAccount ? (
+                <>
+                  {linkedAccount.name}{" "}
+                  <span className="text-[10px] text-slate-400 font-normal">
+                    ({linkedAccount.type}) • Balance: Rp {Number(linkedAccount.current_balance).toLocaleString("id-ID")}
+                  </span>
+                </>
+              ) : (
+                <span className="text-slate-400 font-normal">
+                  Category not linked to a specific account
+                </span>
+              )}
+            </p>
+          </div>
+        </div>
+        <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
+          Auto
+        </span>
       </div>
 
       {/* Allocation section for income */}
@@ -265,7 +305,7 @@ export default function TransactionForm({
                     onChange={(e) => handleUpdateAllocation(idx, "category_id", e.target.value)}
                     className="flex-1 px-2.5 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white"
                   >
-                    {targetCategories.map((cat) => (
+                    {categories.map((cat) => (
                       <option key={cat.id} value={cat.id}>
                         {cat.name} {cat.account ? `(${cat.account.name})` : ""}
                       </option>
