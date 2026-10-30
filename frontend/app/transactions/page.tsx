@@ -118,10 +118,10 @@ export default function TransactionsPage() {
     try {
       if (selectedTransaction) {
         await updateTransaction(selectedTransaction.id, formData);
-        showToast("Transaction updated successfully!");
+        showToast("Transaction updated.");
       } else {
         await createTransaction(formData);
-        showToast("Transaction created successfully!");
+        showToast("Transaction recorded.");
       }
       setIsModalOpen(false);
       loadTransactions();
@@ -138,7 +138,7 @@ export default function TransactionsPage() {
     setDeleteError(null);
     try {
       await deleteTransaction(deleteTarget.id);
-      showToast("Transaction deleted successfully!");
+      showToast("Transaction deleted.");
       setDeleteTarget(null);
       loadTransactions();
     } catch (err: any) {
@@ -163,11 +163,11 @@ export default function TransactionsPage() {
 
   return (
     <div className="flex-1 flex flex-col min-h-screen relative">
-      <Navbar title="Transactions" subtitle="Record and manage your income and expenses." />
+      <Navbar title="Transactions" subtitle="Track and manage your expenses and income." />
 
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-5 right-5 z-50 bg-emerald-700 text-white text-xs font-bold px-4 py-3 rounded-xl shadow-xl animate-in fade-in slide-in-from-bottom-3 duration-200">
+        <div className="fixed bottom-5 right-5 z-50 bg-emerald-700 text-white text-xs font-semibold px-4 py-3 rounded-xl shadow-xl animate-in fade-in slide-in-from-bottom-3 duration-200">
           {toastMessage}
         </div>
       )}
@@ -177,11 +177,11 @@ export default function TransactionsPage() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-lg font-bold text-slate-900 dark:text-white">Transaction History</h2>
-            <p className="text-xs text-slate-500">Filter, search, or add new transactions</p>
+            <p className="text-xs text-slate-500">Filter or record new income and expenses</p>
           </div>
           <button
             onClick={handleOpenAdd}
-            className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-md shadow-emerald-500/20 transition-all hover:scale-102"
+            className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-md shadow-emerald-500/20 transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             Add Transaction
@@ -196,7 +196,7 @@ export default function TransactionsPage() {
           onResetFilters={handleResetFilters}
         />
 
-        {/* Content Table / Cards */}
+        {/* Content Table */}
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 space-y-3">
             <div className="w-8 h-8 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin" />
@@ -206,12 +206,12 @@ export default function TransactionsPage() {
           <div className="p-6 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-center space-y-4 max-w-md mx-auto my-12">
             <AlertCircle className="w-10 h-10 text-rose-500 mx-auto" />
             <div>
-              <h3 className="font-bold text-rose-700 dark:text-rose-400 text-base">Error Loading Data</h3>
+              <h3 className="font-semibold text-rose-700 dark:text-rose-400 text-base">Failed to Load</h3>
               <p className="text-xs text-rose-600 dark:text-rose-300 mt-1">{error}</p>
             </div>
             <button
               onClick={loadTransactions}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-xl transition-colors cursor-pointer"
             >
               <RefreshCw className="w-4 h-4" />
               Try Again
@@ -243,9 +243,9 @@ export default function TransactionsPage() {
       {deleteTarget && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-md rounded-2xl p-6 shadow-2xl space-y-4 animate-in zoom-in-95 duration-150">
-            <h3 className="font-bold text-base text-slate-900 dark:text-white">Delete Transaction</h3>
+            <h3 className="font-semibold text-base text-slate-900 dark:text-white">Delete Transaction</h3>
             <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              Are you sure you want to delete <span className="font-bold text-slate-900 dark:text-white">"{deleteTarget.title}"</span>? This action cannot be undone.
+              Delete transaction <span className="font-semibold text-slate-900 dark:text-white">"{deleteTarget.title}"</span>? Account balance will be adjusted accordingly.
             </p>
 
             {deleteError && (
@@ -258,14 +258,14 @@ export default function TransactionsPage() {
               <button
                 onClick={() => setDeleteTarget(null)}
                 disabled={deleteLoading}
-                className="px-4 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 font-semibold"
+                className="px-4 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDeleteConfirm}
                 disabled={deleteLoading}
-                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold transition-colors disabled:opacity-50"
+                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold transition-colors disabled:opacity-50 cursor-pointer"
               >
                 {deleteLoading ? "Deleting..." : "Confirm Delete"}
               </button>

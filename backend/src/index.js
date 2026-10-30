@@ -9,6 +9,8 @@ const categoryRoutes = require("./Categories/categoryRoute");
 const transactionRoutes = require("./Transactions/transactionRoute");
 const dashboardRoutes = require("./Dashboard/dashboardRoute");
 const authRoutes = require("./Auth/authRoute");
+const accountRoutes = require("./Accounts/accountRoute");
+const allocationRoutes = require("./Allocations/allocationRoute");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -44,10 +46,18 @@ app.get("/health/database", async (req, res) => {
 
 // Routes
 app.use("/auth", authRoutes);
+app.use("/accounts", accountRoutes);
+app.use("/allocations", allocationRoutes);
 app.use("/categories", categoryRoutes);
 app.use("/transactions", transactionRoutes);
 app.use("/dashboard", dashboardRoutes);
 
-app.listen(PORT, () => {
-  console.log(`Finora API running on port ${PORT}`);
-});
+// Export for serverless (e.g. Vercel)
+module.exports = app;
+
+// Listen only when run directly (local development)
+if (process.env.NODE_ENV !== "production") {
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
+}

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Navbar from "@/components/layout/Navbar";
 import CategoryList from "@/components/categories/CategoryList";
 import CategoryForm from "@/components/categories/CategoryForm";
-import { Category, createCategory, deleteCategory, getCategories, updateCategory } from "@/lib/api";
+import { Account, Category, createCategory, deleteCategory, getAccounts, getCategories, updateCategory } from "@/lib/api";
 import { AlertCircle, Plus, RefreshCw } from "lucide-react";
 
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -15,6 +15,7 @@ export default function CategoriesPage() {
   const router = useRouter();
 
   const [categories, setCategories] = useState<Category[]>([]);
+  const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,12 +43,16 @@ export default function CategoriesPage() {
     }
   }, [authLoading, user, router]);
 
-  const loadCategories = async () => {
+  const loadData = async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await getCategories();
-      setCategories(res.data);
+      const [catRes, accRes] = await Promise.all([
+        getCategories(),
+        getAccounts().catch(() => ({ data: [] })),
+      ]);
+      setCategories(catRes.data);
+      setAccounts(accRes.data || []);
     } catch (err: any) {
       console.error("Failed to load categories:", err);
       setError(err.message || "Failed to load categories.");
@@ -58,7 +63,7 @@ export default function CategoriesPage() {
 
   useEffect(() => {
     if (user && !authLoading) {
-      loadCategories();
+      loadData();
     }
   }, [user, authLoading]);
 
@@ -72,18 +77,18 @@ export default function CategoriesPage() {
     setIsModalOpen(true);
   };
 
-  const handleSaveCategory = async (name: string) => {
+  const handleSaveCategory = async (data: { name: string; account_id?: number | null }) => {
     setModalLoading(true);
     try {
       if (selectedCategory) {
-        await updateCategory(selectedCategory.id, { name });
-        showToast("Category updated successfully!");
+        await updateCategory(selectedCategory.id, data);
+        showToast("Category updated.");
       } else {
-        await createCategory({ name });
-        showToast("Category created successfully!");
+        await createCategory(data);
+        showToast("New category created.");
       }
       setIsModalOpen(false);
-      loadCategories();
+      loadData();
     } catch (err: any) {
       throw err;
     } finally {
@@ -97,9 +102,9 @@ export default function CategoriesPage() {
     setDeleteError(null);
     try {
       await deleteCategory(deleteTarget.id);
-      showToast("Category deleted successfully!");
+      showToast("Category deleted.");
       setDeleteTarget(null);
-      loadCategories();
+      loadData();
     } catch (err: any) {
       setDeleteError(err.message || "Failed to delete category");
     } finally {
@@ -121,12 +126,12 @@ export default function CategoriesPage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col min-h-screen relative">
-      <Navbar title="Categories" subtitle="Manage income and expense categories." />
+    <div className="flex-1 flex flex-col min-h-screen relative pb-16">
+      <Navbar title="Categories" subtitle="Manage envelope categories linked to your physical accounts." />
 
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-5 right-5 z-50 bg-emerald-700 text-white text-xs font-bold px-4 py-3 rounded-xl shadow-xl animate-in fade-in slide-in-from-bottom-3 duration-200">
+        <div className="fixed bottom-5 right-5 z-50 bg-emerald-700 text-white text-xs font-semibold px-4 py-3 rounded-xl shadow-xl animate-in fade-in slide-in-from-bottom-3 duration-200">
           {toastMessage}
         </div>
       )}
@@ -134,12 +139,14 @@ export default function CategoriesPage() {
       <main className="flex-1 p-4 md:p-8 space-y-6 max-w-7xl w-full mx-auto">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white">All Categories</h2>
-            <p className="text-xs text-slate-500">Add or edit transaction categories</p>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white">Category List</h2>
+            <p className="text-xs text-slate-500">
+              Each category links to an account for automatic balance tracking
+            </p>
           </div>
           <button
             onClick={handleOpenAdd}
-            className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-md shadow-emerald-500/20 transition-all hover:scale-102"
+            className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-md shadow-emerald-500/20 transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             Add Category
@@ -155,12 +162,12 @@ export default function CategoriesPage() {
           <div className="p-6 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-center space-y-4 max-w-md mx-auto my-12">
             <AlertCircle className="w-10 h-10 text-rose-500 mx-auto" />
             <div>
-              <h3 className="font-bold text-rose-700 dark:text-rose-400 text-base">Error Loading Data</h3>
+              <h3 className="font-semibold text-rose-700 dark:text-rose-400 text-base">Failed to Load Categories</h3>
               <p className="text-xs text-rose-600 dark:text-rose-300 mt-1">{error}</p>
             </div>
             <button
-              onClick={loadCategories}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl transition-colors"
+              onClick={loadData}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-xl transition-colors cursor-pointer"
             >
               <RefreshCw className="w-4 h-4" />
               Try Again
@@ -178,11 +185,12 @@ export default function CategoriesPage() {
         )}
       </main>
 
-      {/* Add / Edit Category Modal */}
+      {/* Add / Edit Modal */}
       <CategoryForm
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         initialData={selectedCategory}
+        accounts={accounts}
         onSubmit={handleSaveCategory}
         loading={modalLoading}
       />
@@ -191,13 +199,13 @@ export default function CategoriesPage() {
       {deleteTarget && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-md rounded-2xl p-6 shadow-2xl space-y-4 animate-in zoom-in-95 duration-150">
-            <h3 className="font-bold text-base text-slate-900 dark:text-white">Delete Category</h3>
+            <h3 className="font-semibold text-base text-slate-900 dark:text-white">Delete Category</h3>
             <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              Are you sure you want to delete <span className="font-bold text-slate-900 dark:text-white">"{deleteTarget.name}"</span>?
+              Are you sure you want to delete <span className="font-semibold text-slate-900 dark:text-white">"{deleteTarget.name}"</span>?
             </p>
 
             {deleteError && (
-              <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 text-rose-600 text-xs font-semibold leading-snug">
+              <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 text-rose-600 text-xs font-medium">
                 {deleteError}
               </div>
             )}
@@ -206,14 +214,14 @@ export default function CategoriesPage() {
               <button
                 onClick={() => setDeleteTarget(null)}
                 disabled={deleteLoading}
-                className="px-4 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 font-semibold"
+                className="px-4 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDeleteConfirm}
                 disabled={deleteLoading}
-                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold transition-colors disabled:opacity-50"
+                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold transition-colors disabled:opacity-50 cursor-pointer"
               >
                 {deleteLoading ? "Deleting..." : "Confirm Delete"}
               </button>

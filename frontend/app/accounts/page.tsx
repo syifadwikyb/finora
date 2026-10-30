@@ -1,0 +1,365 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { useRouter } from "next/navigation";
+import Navbar from "@/components/layout/Navbar";
+import { Account, createAccount, deleteAccount, getAccounts, updateAccount } from "@/lib/api";
+import { formatCurrency } from "@/lib/utils";
+import { Landmark, Plus, Trash2, Edit2, AlertCircle, RefreshCw, X, Wallet, Coins, Tags } from "lucide-react";
+
+export default function AccountsPage() {
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
+
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Modal State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
+  const [modalLoading, setModalLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    type: "bank",
+    account_number: "",
+    current_balance: "",
+  });
+  const [formError, setFormError] = useState("");
+
+  // Toast
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.replace("/login");
+    }
+  }, [authLoading, user, router]);
+
+  const loadAccounts = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await getAccounts();
+      setAccounts(res.data);
+    } catch (err: any) {
+      setError(err.message || "Failed to load accounts");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user && !authLoading) {
+      loadAccounts();
+    }
+  }, [user, authLoading]);
+
+  const handleOpenAdd = () => {
+    setSelectedAccount(null);
+    setFormData({ name: "", type: "bank", account_number: "", current_balance: "0" });
+    setFormError("");
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEdit = (acc: Account) => {
+    setSelectedAccount(acc);
+    setFormData({
+      name: acc.name,
+      type: acc.type || "bank",
+      account_number: acc.account_number || "",
+      current_balance: String(acc.current_balance),
+    });
+    setFormError("");
+    setIsModalOpen(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError("");
+    if (!formData.name.trim()) {
+      setFormError("Account name is required");
+      return;
+    }
+
+    setModalLoading(true);
+    try {
+      if (selectedAccount) {
+        await updateAccount(selectedAccount.id, {
+          name: formData.name.trim(),
+          type: formData.type,
+          account_number: formData.account_number.trim() || undefined,
+        });
+        showToast("Account updated successfully.");
+      } else {
+        await createAccount({
+          name: formData.name.trim(),
+          type: formData.type,
+          account_number: formData.account_number.trim() || undefined,
+          current_balance: Number(formData.current_balance) || 0,
+        });
+        showToast("New account added successfully.");
+      }
+      setIsModalOpen(false);
+      loadAccounts();
+    } catch (err: any) {
+      setFormError(err.message || "Failed to save account");
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
+  const handleDelete = async (acc: Account) => {
+    if (!confirm(`Delete account "${acc.name}"?`)) return;
+    try {
+      await deleteAccount(acc.id);
+      showToast("Account deleted.");
+      loadAccounts();
+    } catch (err: any) {
+      alert(err.message || "Failed to delete account");
+    }
+  };
+
+  const totalBalance = accounts.reduce((acc, curr) => acc + Number(curr.current_balance || 0), 0);
+
+  if (authLoading) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center py-24 space-y-3">
+        <div className="w-8 h-8 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm font-medium text-slate-500">Loading...</p>
+      </div>
+    );
+  }
+
+  if (!user) return null;
+
+  return (
+    <div className="flex-1 flex flex-col min-h-screen relative pb-16">
+      <Navbar title="Accounts" subtitle="Physical money storage (Bank, E-Wallet, Cash)." />
+
+      {toastMessage && (
+        <div className="fixed bottom-5 right-5 z-50 bg-emerald-700 text-white text-xs font-semibold px-4 py-3 rounded-xl shadow-xl">
+          {toastMessage}
+        </div>
+      )}
+
+      <main className="flex-1 p-4 md:p-8 space-y-6 max-w-7xl w-full mx-auto">
+        {/* Header Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-emerald-900 text-white p-6 rounded-3xl shadow-lg">
+          <div>
+            <span className="text-xs font-semibold uppercase tracking-wider text-emerald-300">Total Cash Balance</span>
+            <h2 className="text-2xl md:text-3xl font-extrabold mt-1">{formatCurrency(totalBalance)}</h2>
+            <p className="text-xs text-emerald-200/80 mt-1">Across {accounts.length} accounts</p>
+          </div>
+          <button
+            onClick={handleOpenAdd}
+            className="self-start sm:self-auto flex items-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-semibold rounded-2xl shadow-md transition-all cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            Add Account
+          </button>
+        </div>
+
+        {/* Account Cards */}
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20 space-y-3">
+            <div className="w-8 h-8 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+            <p className="text-sm font-medium text-slate-500">Loading accounts...</p>
+          </div>
+        ) : error ? (
+          <div className="p-6 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-center space-y-4 max-w-md mx-auto my-12">
+            <AlertCircle className="w-10 h-10 text-rose-500 mx-auto" />
+            <p className="text-xs text-rose-600 dark:text-rose-300">{error}</p>
+            <button
+              onClick={loadAccounts}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-xl cursor-pointer"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Try Again
+            </button>
+          </div>
+        ) : accounts.length === 0 ? (
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-12 text-center">
+            <Landmark className="w-12 h-12 text-slate-400 mx-auto mb-3" />
+            <h3 className="font-semibold text-slate-800 dark:text-white text-base">No Accounts Yet</h3>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1 mb-4">
+              Add your bank account, e-wallet, or cash storage.
+            </p>
+            <button
+              onClick={handleOpenAdd}
+              className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-semibold hover:bg-emerald-700 cursor-pointer"
+            >
+              Add Now
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {accounts.map((acc) => {
+              const Icon = acc.type === "ewallet" ? Wallet : acc.type === "cash" ? Coins : Landmark;
+              const catCount = acc.categories ? acc.categories.length : 0;
+              return (
+                <div
+                  key={acc.id}
+                  className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-5 shadow-xs flex flex-col justify-between hover:border-emerald-500/40 transition-colors"
+                >
+                  <div>
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                          <Icon className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-slate-900 dark:text-white text-sm">{acc.name}</h3>
+                          <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">
+                            {acc.type} {acc.account_number ? `• ${acc.account_number}` : ""}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleOpenEdit(acc)}
+                          className="p-1.5 text-slate-400 hover:text-emerald-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(acc)}
+                          className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="mt-5">
+                      <span className="text-[11px] text-slate-400">Balance</span>
+                      <p className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">
+                        {formatCurrency(Number(acc.current_balance))}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
+                    <span className="flex items-center gap-1">
+                      <Tags className="w-3.5 h-3.5 text-emerald-600" />
+                      {catCount} Categories
+                    </span>
+                    <button
+                      onClick={() => router.push("/categories")}
+                      className="text-emerald-600 dark:text-emerald-400 font-semibold hover:underline cursor-pointer"
+                    >
+                      View Categories &rarr;
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </main>
+
+      {/* Modal Form */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-md rounded-3xl p-6 shadow-2xl animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 mb-4">
+              <h3 className="font-semibold text-slate-900 dark:text-white text-base">
+                {selectedAccount ? "Edit Account" : "Add Account"}
+              </h3>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {formError && (
+              <div className="mb-4 p-3 rounded-xl bg-rose-50 text-rose-600 text-xs font-medium">
+                {formError}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+              <div>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Account Name *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Bank Account, SeaBank, Cash Wallet"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Type</label>
+                  <select
+                    value={formData.type}
+                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white"
+                  >
+                    <option value="bank">Bank</option>
+                    <option value="ewallet">E-Wallet</option>
+                    <option value="cash">Cash</option>
+                    <option value="investment">Investment</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Account / Card Number</label>
+                  <input
+                    type="text"
+                    placeholder="Optional"
+                    value={formData.account_number}
+                    onChange={(e) => setFormData({ ...formData, account_number: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white"
+                  />
+                </div>
+              </div>
+
+              {!selectedAccount && (
+                <div>
+                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Starting Balance (Rp)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    value={formData.current_balance}
+                    onChange={(e) => setFormData({ ...formData, current_balance: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white"
+                  />
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  disabled={modalLoading}
+                  className="px-4 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 font-medium cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={modalLoading}
+                  className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition-colors disabled:opacity-50 cursor-pointer"
+                >
+                  {modalLoading ? "Saving..." : "Save Account"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

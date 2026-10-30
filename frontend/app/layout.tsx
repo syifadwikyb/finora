@@ -6,6 +6,8 @@ import BottomNavbar from "@/components/layout/BottomNavbar";
 import BackNavigationHandler from "@/components/layout/BackNavigationHandler";
 import LayoutWrapper from "@/components/layout/LayoutWrapper";
 import { AuthProvider } from "@/components/auth/AuthProvider";
+import ClientLayout from "@/components/layout/ClientLayout";
+
 const poppins = Poppins({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
@@ -22,8 +24,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-
-
   return (
     <html lang="en" className="h-full" suppressHydrationWarning>
       <head>
@@ -44,12 +44,14 @@ export default function RootLayout({
       </head>
       <body className={`${poppins.className} min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex`}>
         <AuthProvider>
-          <BackNavigationHandler />
-          <Sidebar />
-          <LayoutWrapper>
-            {children}
-          </LayoutWrapper>
-          <BottomNavbar />
+          <ClientLayout>
+            <BackNavigationHandler />
+            <Sidebar />
+            <LayoutWrapper>
+              {children}
+            </LayoutWrapper>
+            <BottomNavbar />
+          </ClientLayout>
         </AuthProvider>
       </body>
     </html>

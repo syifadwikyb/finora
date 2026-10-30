@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Fingerprint, KeyRound } from "lucide-react";
+import { Fingerprint } from "lucide-react";
 import { User } from "firebase/auth";
 
 interface LockScreenProps {
@@ -27,40 +27,11 @@ export default function LockScreen({ user, onUnlock }: LockScreenProps) {
     const method = localStorage.getItem(`finora_lock_method_${user.uid}`);
     if (method === "biometric") {
       setLockMethod("biometric");
-      // Auto-trigger biometric on mount
       handleBiometricUnlock();
     } else {
       setLockMethod("pin");
     }
   }, [user.uid]);
-
-  const handlePinSubmit = async () => {
-    if (pin.length !== 4) {
-      setError("PIN harus 4 digit");
-      return;
-    }
-
-    setVerifying(true);
-    setError(null);
-
-    try {
-      const storedHash = localStorage.getItem(`finora_lock_pin_${user.uid}`);
-      const inputHash = await hashPin(pin);
-
-      if (inputHash === storedHash) {
-        // Update last active timestamp
-        localStorage.setItem(`finora_last_active_${user.uid}`, Date.now().toString());
-        onUnlock();
-      } else {
-        setError("PIN salah. Silakan coba lagi.");
-        setPin("");
-      }
-    } catch {
-      setError("Terjadi kesalahan. Silakan coba lagi.");
-    } finally {
-      setVerifying(false);
-    }
-  };
 
   const handleBiometricUnlock = async () => {
     setVerifying(true);
@@ -68,7 +39,7 @@ export default function LockScreen({ user, onUnlock }: LockScreenProps) {
 
     try {
       if (!window.PublicKeyCredential || !navigator.credentials) {
-        setError("Browser tidak mendukung biometrik.");
+        setError("Biometrics not supported on this browser.");
         setVerifying(false);
         return;
       }
@@ -91,9 +62,9 @@ export default function LockScreen({ user, onUnlock }: LockScreenProps) {
       }
     } catch (err: any) {
       if (err.name === "NotAllowedError") {
-        setError("Verifikasi biometrik dibatalkan.");
+        setError("Biometric verification cancelled.");
       } else {
-        setError("Gagal memverifikasi biometrik. Coba lagi.");
+        setError("Biometric verification failed. Try again.");
       }
     } finally {
       setVerifying(false);
@@ -106,16 +77,20 @@ export default function LockScreen({ user, onUnlock }: LockScreenProps) {
       setPin(newPin);
       setError(null);
 
-      // Auto submit when 4 digits entered
       if (newPin.length === 4) {
         setTimeout(async () => {
           const storedHash = localStorage.getItem(`finora_lock_pin_${user.uid}`);
+          // If no PIN set, allow unlock or match
+          if (!storedHash) {
+            onUnlock();
+            return;
+          }
           const inputHash = await hashPin(newPin);
           if (inputHash === storedHash) {
             localStorage.setItem(`finora_last_active_${user.uid}`, Date.now().toString());
             onUnlock();
           } else {
-            setError("PIN salah. Silakan coba lagi.");
+            setError("Incorrect PIN. Try again.");
             setPin("");
           }
         }, 150);
@@ -130,7 +105,6 @@ export default function LockScreen({ user, onUnlock }: LockScreenProps) {
 
   return (
     <div className="fixed inset-0 z-[100] bg-gradient-to-b from-slate-900 via-slate-950 to-emerald-950 flex flex-col items-center justify-center p-6">
-      {/* Logo */}
       <div className="mb-8 flex flex-col items-center">
         <div className="w-16 h-16 rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-2xl shadow-emerald-500/30 mb-4">
           <svg className="w-9 h-9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -139,7 +113,7 @@ export default function LockScreen({ user, onUnlock }: LockScreenProps) {
             <path d="M18 12a2 2 0 0 0 0 4h4v-4Z" />
           </svg>
         </div>
-        <h1 className="text-white text-xl font-bold tracking-tight">FINORA</h1>
+        <h1 className="text-white text-xl font-bold tracking-tight">Finora</h1>
         <p className="text-emerald-300/60 text-xs mt-1">
           {user.displayName || user.email?.split("@")[0] || "User"}
         </p>
@@ -147,9 +121,8 @@ export default function LockScreen({ user, onUnlock }: LockScreenProps) {
 
       {lockMethod === "pin" ? (
         <div className="w-full max-w-xs space-y-6">
-          <p className="text-center text-sm text-slate-400">Masukkan PIN 4 digit</p>
+          <p className="text-center text-sm text-slate-400">Enter 4-digit PIN</p>
 
-          {/* PIN dots */}
           <div className="flex justify-center gap-4">
             {[0, 1, 2, 3].map((i) => (
               <div
@@ -167,15 +140,14 @@ export default function LockScreen({ user, onUnlock }: LockScreenProps) {
             <p className="text-center text-xs text-rose-400 font-medium animate-pulse">{error}</p>
           )}
 
-          {/* Numeric keypad */}
           <div className="grid grid-cols-3 gap-3 max-w-[240px] mx-auto">
-            {["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "⌫"].map((key) => {
-              if (key === "") return <div key="empty" />;
+            {["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "⌫"].map((key, idx) => {
+              if (key === "") return <div key={idx} />;
               return (
                 <button
-                  key={key}
+                  key={idx}
                   type="button"
-                  onClick={() => key === "⌫" ? handlePinBackspace() : handlePinKeyDown(key)}
+                  onClick={() => (key === "⌫" ? handlePinBackspace() : handlePinKeyDown(key))}
                   disabled={verifying}
                   className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 text-white text-xl font-semibold
                     hover:bg-white/10 active:bg-white/20 active:scale-95
@@ -190,20 +162,20 @@ export default function LockScreen({ user, onUnlock }: LockScreenProps) {
         </div>
       ) : (
         <div className="w-full max-w-xs space-y-6 text-center">
-          <p className="text-sm text-slate-400">Verifikasi identitas Anda</p>
+          <p className="text-sm text-slate-400">Verify your identity</p>
 
           <button
             type="button"
             onClick={handleBiometricUnlock}
             disabled={verifying}
             className="mx-auto w-24 h-24 rounded-3xl bg-emerald-600/20 border-2 border-emerald-500/30 flex items-center justify-center
-              hover:bg-emerald-600/30 active:scale-95 transition-all duration-200 disabled:opacity-50"
+              hover:bg-emerald-600/30 active:scale-95 transition-all duration-200 disabled:opacity-50 cursor-pointer"
           >
             <Fingerprint className={`w-12 h-12 text-emerald-400 ${verifying ? "animate-pulse" : ""}`} />
           </button>
 
           <p className="text-xs text-slate-500">
-            {verifying ? "Memverifikasi..." : "Sentuh sensor untuk membuka"}
+            {verifying ? "Verifying..." : "Touch fingerprint sensor to unlock"}
           </p>
 
           {error && (
@@ -214,7 +186,7 @@ export default function LockScreen({ user, onUnlock }: LockScreenProps) {
                 onClick={handleBiometricUnlock}
                 className="text-xs text-emerald-400 hover:text-emerald-300 underline transition-colors"
               >
-                Coba lagi
+                Try again
               </button>
             </div>
           )}

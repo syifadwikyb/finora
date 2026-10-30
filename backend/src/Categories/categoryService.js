@@ -31,6 +31,7 @@ const createCategory = async (data) => {
   const categoryData = {
     name: data.name.trim(),
     user_id: data.user_id || null,
+    account_id: data.account_id ? Number(data.account_id) : null,
   };
 
   return await categoryRepository.createCategory(categoryData);
@@ -50,14 +51,15 @@ const updateCategory = async (id, userId, data) => {
     throw error;
   }
 
-  if (!data.name || typeof data.name !== "string" || data.name.trim() === "") {
-    const error = new Error("Category name is required");
+  if (data.name !== undefined && (typeof data.name !== "string" || data.name.trim() === "")) {
+    const error = new Error("Category name cannot be empty");
     error.statusCode = 400;
     throw error;
   }
 
   const categoryData = {
-    name: data.name.trim(),
+    name: data.name ? data.name.trim() : undefined,
+    account_id: data.account_id !== undefined ? (data.account_id ? Number(data.account_id) : null) : undefined,
   };
 
   return await categoryRepository.updateCategory(id, userId, categoryData);
@@ -77,10 +79,11 @@ const deleteCategory = async (id, userId) => {
     throw error;
   }
 
+  // Cek apakah kategori digunakan dalam transaksi
   const transactionCount = await categoryRepository.countTransactionsByCategoryId(id, userId);
   if (transactionCount > 0) {
-    const error = new Error("Category cannot be deleted because it is being used by transactions.");
-    error.statusCode = 400;
+    const error = new Error("Cannot delete category because it is used in transactions");
+    error.statusCode = 409;
     throw error;
   }
 

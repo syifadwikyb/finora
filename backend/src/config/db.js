@@ -1,12 +1,21 @@
 const { Pool } = require("pg");
-require("dotenv").config();
+const path = require("path");
+require("dotenv").config({ path: path.resolve(__dirname, "../../.env") });
 
 const isLocalhost = process.env.DATABASE_URL && process.env.DATABASE_URL.includes("localhost");
 
-const pool = new Pool({
+// Supabase session/transaction pooler port 6543 / 5432:
+// Jika server pooler tidak memerlukan parameter ssl manual atau menolak SSL negotiation tertentu,
+// biarkan connectionString mengatur atau disable jika dibutuhkan.
+const poolConfig = {
   connectionString: process.env.DATABASE_URL,
-  ssl: isLocalhost ? false : { rejectUnauthorized: false },
-});
+};
+
+if (!isLocalhost && process.env.DATABASE_URL && !process.env.DATABASE_URL.includes("pooler.supabase.com")) {
+  poolConfig.ssl = { rejectUnauthorized: false };
+}
+
+const pool = new Pool(poolConfig);
 
 pool.connect((err, client, release) => {
   if (err) {

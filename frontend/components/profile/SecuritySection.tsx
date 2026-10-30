@@ -1,12 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Fingerprint,
-  KeyRound,
-  CheckCircle2,
-  AlertCircle,
-} from "lucide-react";
+import { KeyRound, CheckCircle2, AlertCircle } from "lucide-react";
 import { User } from "firebase/auth";
 import { changePassword, getAuthErrorMessage } from "@/lib/firebase";
 import LockScreenSettings from "./LockScreenSettings";
@@ -16,8 +11,7 @@ interface SecuritySectionProps {
   displayName: string;
 }
 
-export default function SecuritySection({ user, displayName }: SecuritySectionProps) {
-  // Password States
+export default function SecuritySection({ user }: SecuritySectionProps) {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -31,24 +25,24 @@ export default function SecuritySection({ user, displayName }: SecuritySectionPr
     setPasswordSuccess(null);
 
     if (!currentPassword) {
-      setPasswordError("Silakan masukkan password saat ini untuk verifikasi keamanan.");
+      setPasswordError("Enter your current password.");
       return;
     }
 
     if (newPassword.length < 6) {
-      setPasswordError("Password baru harus minimal 6 karakter.");
+      setPasswordError("New password must be at least 6 characters.");
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setPasswordError("Konfirmasi password baru tidak cocok.");
+      setPasswordError("Passwords do not match.");
       return;
     }
 
     setPasswordSaving(true);
     try {
       await changePassword(currentPassword, newPassword);
-      setPasswordSuccess("Password berhasil diubah!");
+      setPasswordSuccess("Password updated successfully.");
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
@@ -61,22 +55,28 @@ export default function SecuritySection({ user, displayName }: SecuritySectionPr
   };
 
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs space-y-3">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs space-y-6">
       <div className="flex items-center gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
         <div className="w-9 h-9 rounded-xl bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400 flex items-center justify-center font-bold">
           <KeyRound className="w-5 h-5" />
         </div>
         <div>
-          <h3 className="font-bold text-base text-slate-900 dark:text-white">Security & Biometrics</h3>
-          <p className="text-xs text-slate-500">Manage your credentials and device authentication</p>
+          <h3 className="font-bold text-base text-slate-900 dark:text-white">Security & Login</h3>
+          <p className="text-xs text-slate-500">Auto-lock & device authentication</p>
         </div>
       </div>
 
-      {/* Fingerprint / Biometric Section */}
-      {/* <LockScreenSettings user={user} /> */}
+      {/* Lock Screen & Biometrics */}
+      <div>
+        <h4 className="font-semibold text-xs text-slate-900 dark:text-white mb-2">
+          App Lock & Biometrics
+        </h4>
+        <LockScreenSettings user={user} />
+      </div>
+
       {/* Change Password Form */}
-      <div className="pt-2">
-        <h4 className="font-bold text-xs text-slate-900 dark:text-white mb-3">
+      <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+        <h4 className="font-semibold text-xs text-slate-900 dark:text-white mb-3">
           Change Password
         </h4>
 
@@ -99,30 +99,30 @@ export default function SecuritySection({ user, displayName }: SecuritySectionPr
             <form onSubmit={handleChangePassword} className="space-y-4 text-xs">
               <div>
                 <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Current Password (Password Saat Ini)
+                  Current Password
                 </label>
                 <input
                   type="password"
                   required
-                  placeholder="Masukkan password saat ini untuk verifikasi"
+                  placeholder="Enter current password"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-xs"
+                  className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-xs"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    New Password (Password Baru)
+                    New Password
                   </label>
                   <input
                     type="password"
                     required
-                    placeholder="Minimal 6 karakter"
+                    placeholder="Min. 6 characters"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="w-full px-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-xs"
+                    className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-xs"
                   />
                 </div>
 
@@ -133,10 +133,10 @@ export default function SecuritySection({ user, displayName }: SecuritySectionPr
                   <input
                     type="password"
                     required
-                    placeholder="Ulangi password baru"
+                    placeholder="Repeat new password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full px-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-xs"
+                    className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-xs"
                   />
                 </div>
               </div>
@@ -145,7 +145,7 @@ export default function SecuritySection({ user, displayName }: SecuritySectionPr
                 <button
                   type="submit"
                   disabled={passwordSaving}
-                  className="px-5 py-2.5 bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white font-bold text-xs rounded-xl shadow-xs transition-all disabled:opacity-50"
+                  className="px-4 py-2 bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white font-medium text-xs rounded-xl transition-colors disabled:opacity-50 cursor-pointer"
                 >
                   {passwordSaving ? "Updating..." : "Update Password"}
                 </button>
@@ -154,7 +154,7 @@ export default function SecuritySection({ user, displayName }: SecuritySectionPr
           </>
         ) : (
           <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/60 flex items-start gap-3.5">
-            <div className="w-9 h-9 rounded-xl bg-white dark:bg-slate-700 shadow-xs border border-slate-200 dark:border-slate-600 flex items-center justify-center shrink-0 mt-0.5">
+            <div className="w-9 h-9 rounded-xl bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 flex items-center justify-center shrink-0 mt-0.5">
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
                 <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
@@ -163,11 +163,11 @@ export default function SecuritySection({ user, displayName }: SecuritySectionPr
               </svg>
             </div>
             <div className="space-y-1">
-              <h5 className="font-bold text-xs text-slate-900 dark:text-white">
-                Akun Terhubung dengan Google
+              <h5 className="font-semibold text-xs text-slate-900 dark:text-white">
+                Signed in with Google
               </h5>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                Anda masuk menggunakan autentikasi Google (Single Sign-On). Manajemen kata sandi dan keamanan akun Anda dikelola secara langsung dan aman oleh Google.
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                Password and security are managed through your Google Account.
               </p>
               <div className="pt-1">
                 <a
@@ -176,7 +176,7 @@ export default function SecuritySection({ user, displayName }: SecuritySectionPr
                   rel="noreferrer"
                   className="inline-flex items-center text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
                 >
-                  Kelola Keamanan di Google Account &rarr;
+                  Manage Google Account &rarr;
                 </a>
               </div>
             </div>

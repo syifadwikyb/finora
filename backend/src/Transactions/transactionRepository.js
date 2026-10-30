@@ -14,6 +14,16 @@ const findAllTransactions = async (userId, filters = {}) => {
     conditions.push(`t.category_id = $${params.length}`);
   }
 
+  if (filters.account_id) {
+    params.push(filters.account_id);
+    conditions.push(`t.account_id = $${params.length}`);
+  }
+
+  if (filters.allocation_id) {
+    params.push(filters.allocation_id);
+    conditions.push(`t.allocation_id = $${params.length}`);
+  }
+
   if (filters.date) {
     params.push(filters.date);
     conditions.push(`t.transaction_date = $${params.length}`);
@@ -41,7 +51,7 @@ const findAllTransactions = async (userId, filters = {}) => {
   const countRes = await pool.query(countQuery, params);
   const total = countRes.rows[0]?.total || 0;
 
-  // Query transactions with joined category object
+  // Query transactions with joined category, account, and allocation
   let dataQuery = `
     SELECT 
       t.id,
@@ -49,15 +59,27 @@ const findAllTransactions = async (userId, filters = {}) => {
       t.amount::numeric as amount,
       t.type,
       t.category_id,
+      t.account_id,
+      t.allocation_id,
       t.description,
       t.transaction_date,
       t.created_at,
       CASE 
         WHEN c.id IS NOT NULL THEN json_build_object('id', c.id, 'name', c.name)
         ELSE NULL
-      END as categories
+      END as categories,
+      CASE 
+        WHEN a.id IS NOT NULL THEN json_build_object('id', a.id, 'name', a.name, 'type', a.type)
+        ELSE NULL
+      END as account,
+      CASE 
+        WHEN al.id IS NOT NULL THEN json_build_object('id', al.id, 'name', al.name, 'current_balance', al.current_balance::numeric, 'target_amount', al.target_amount::numeric)
+        ELSE NULL
+      END as allocation
     FROM transactions t
     LEFT JOIN categories c ON t.category_id = c.id
+    LEFT JOIN accounts a ON t.account_id = a.id
+    LEFT JOIN allocations al ON t.allocation_id = al.id
     ${whereClause}
     ORDER BY t.transaction_date DESC, t.id DESC
   `;
@@ -81,7 +103,7 @@ const findAllTransactions = async (userId, filters = {}) => {
   };
 };
 
-const findTransactionById = async (id, userId) => {
+const findTransactionById = async (id, userId, client = pool) => {
   const query = `
     SELECT 
       t.id,
@@ -89,65 +111,81 @@ const findTransactionById = async (id, userId) => {
       t.amount::numeric as amount,
       t.type,
       t.category_id,
+      t.account_id,
+      t.allocation_id,
       t.description,
       t.transaction_date,
       t.created_at,
       CASE 
         WHEN c.id IS NOT NULL THEN json_build_object('id', c.id, 'name', c.name)
         ELSE NULL
-      END as categories
+      END as categories,
+      CASE 
+        WHEN a.id IS NOT NULL THEN json_build_object('id', a.id, 'name', a.name, 'type', a.type)
+        ELSE NULL
+      END as account,
+      CASE 
+        WHEN al.id IS NOT NULL THEN json_build_object('id', al.id, 'name', al.name, 'current_balance', al.current_balance::numeric, 'target_amount', al.target_amount::numeric)
+        ELSE NULL
+      END as allocation
     FROM transactions t
     LEFT JOIN categories c ON t.category_id = c.id
+    LEFT JOIN accounts a ON t.account_id = a.id
+    LEFT JOIN allocations al ON t.allocation_id = al.id
     WHERE t.id = $1 AND t.user_id = $2
   `;
-  const { rows } = await pool.query(query, [id, userId]);
+  const { rows } = await client.query(query, [id, userId]);
   return rows[0] || null;
 };
 
-const createTransaction = async (data) => {
+const createTransaction = async (data, client = pool) => {
   const insertQuery = `
-    INSERT INTO transactions (title, amount, type, category_id, description, transaction_date, user_id)
-    VALUES ($1, $2, $3, $4, $5, $6, $7)
+    INSERT INTO transactions (title, amount, type, category_id, account_id, allocation_id, description, transaction_date, user_id)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
     RETURNING id
   `;
   const values = [
     data.title,
     data.amount,
     data.type,
-    data.category_id,
+    data.category_id || null,
+    data.account_id || null,
+    data.allocation_id || null,
     data.description || null,
     data.transaction_date,
-    data.user_id, // Pastikan baris ini ada di urutan ke-7 untuk mengisi $7
+    data.user_id,
   ];
 
-  const { rows } = await pool.query(insertQuery, values);
-  return await findTransactionById(rows[0].id, data.user_id);
+  const { rows } = await client.query(insertQuery, values);
+  return await findTransactionById(rows[0].id, data.user_id, client);
 };
 
-const updateTransaction = async (id, userId, data) => {
+const updateTransaction = async (id, userId, data, client = pool) => {
   const updateQuery = `
     UPDATE transactions
-    SET title = $1, amount = $2, type = $3, category_id = $4, description = $5, transaction_date = $6
-    WHERE id = $7 AND user_id = $8
+    SET title = $1, amount = $2, type = $3, category_id = $4, account_id = $5, allocation_id = $6, description = $7, transaction_date = $8
+    WHERE id = $9 AND user_id = $10
     RETURNING id
   `;
   const values = [
     data.title,
     data.amount,
     data.type,
-    data.category_id,
+    data.category_id || null,
+    data.account_id || null,
+    data.allocation_id || null,
     data.description || null,
     data.transaction_date,
-    id,     // Menggunakan parameter id dari argumen fungsi ($7)
-    userId, // Menggunakan parameter userId dari argumen fungsi ($8)
+    id,
+    userId,
   ];
-  await pool.query(updateQuery, values);
-  return await findTransactionById(id, userId);
+  await client.query(updateQuery, values);
+  return await findTransactionById(id, userId, client);
 };
 
-const deleteTransaction = async (id, userId) => {
+const deleteTransaction = async (id, userId, client = pool) => {
   const query = "DELETE FROM transactions WHERE id = $1 AND user_id = $2 RETURNING *";
-  const { rows } = await pool.query(query, [id, userId]);
+  const { rows } = await client.query(query, [id, userId]);
   return rows[0] || null;
 };
 

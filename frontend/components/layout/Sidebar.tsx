@@ -1,20 +1,18 @@
 "use client";
-import { useAuth } from "@/components/auth/AuthProvider";
-
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, ReceiptText, Tags, User, Wallet } from "lucide-react";
+import { LayoutDashboard, ReceiptText, Tags, User, Wallet, Landmark } from "lucide-react";
 
 const navItems = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
-  { label: "Transactions", href: "/transactions", icon: ReceiptText },
+  { label: "Accounts", href: "/accounts", icon: Landmark },
   { label: "Categories", href: "/categories", icon: Tags },
+  { label: "Transactions", href: "/transactions", icon: ReceiptText },
   { label: "Profile", href: "/profile", icon: User },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const { logout } = useAuth();
 
   if (pathname === '/login' || pathname === '/register') return null;
 
@@ -25,8 +23,8 @@ export default function Sidebar() {
           <Wallet className="w-5 h-5" />
         </div>
         <div>
-          <h1 className="font-bold text-lg tracking-tight text-slate-900 dark:text-white">FINORA</h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400">Personal Finance</p>
+          <h1 className="font-bold text-lg tracking-tight text-slate-900 dark:text-white">Finora</h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Envelope Budgeting</p>
         </div>
       </div>
 
