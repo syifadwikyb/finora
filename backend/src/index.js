@@ -52,12 +52,9 @@ app.use("/categories", categoryRoutes);
 app.use("/transactions", transactionRoutes);
 app.use("/dashboard", dashboardRoutes);
 
-// Export for serverless (e.g. Vercel)
-module.exports = app;
+// Always start the server on Render / Local
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`[SERVER SUCCESS] Server is running on port ${PORT}`);
+});
 
-// Listen only when run directly (local development)
-if (process.env.NODE_ENV !== "production") {
-  app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-  });
-}
+module.exports = app;
