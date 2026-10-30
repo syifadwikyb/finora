@@ -18,9 +18,17 @@ export function middleware(request: NextRequest) {
   const publicPaths = ["/login", "/register", "/enter-pin"];
   const isPublic = publicPaths.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 
+  // Cek apakah user sudah mengaktifkan PIN di pengaturan profil
+  const pinEnabled = request.cookies.get("finora_pin_enabled")?.value;
+
+  // Jika PIN belum diaktifkan, biarkan akses ke semua halaman tanpa redirect
+  if (pinEnabled !== "true") {
+    return NextResponse.next();
+  }
+
   const pinVerified = request.cookies.get("finora_pin_verified")?.value;
 
-  // Jika mencoba mengakses halaman berproteksi dan belum verifikasi PIN: redirect ke /enter-pin
+  // Jika PIN aktif, mencoba akses halaman berproteksi, dan belum verifikasi PIN → redirect ke /enter-pin
   if (!isPublic && pinVerified !== "true") {
     const enterPinUrl = new URL("/enter-pin", request.url);
     enterPinUrl.searchParams.set("redirect", pathname);

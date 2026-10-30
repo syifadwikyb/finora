@@ -31,6 +31,11 @@ export default function LockScreenSettings({ user }: LockScreenSettingsProps) {
       const saved = localStorage.getItem(`finora_lock_method_${user.uid}`);
       if (saved === "pin") {
         setLockMethod("pin");
+        // Pastikan cookie finora_pin_enabled juga ter-set jika PIN sudah ada di localStorage
+        const pinExists = localStorage.getItem(`finora_lock_pin_${user.uid}`);
+        if (pinExists) {
+          document.cookie = "finora_pin_enabled=true; path=/; SameSite=Lax";
+        }
       }
     }
   }, [user]);
@@ -40,12 +45,12 @@ export default function LockScreenSettings({ user }: LockScreenSettingsProps) {
     setMessage(null);
 
     if (pinInput.length !== 4 || !/^\d{4}$/.test(pinInput)) {
-      setError("PIN must be 4 digits.");
+      setError("PIN harus 4 digit angka.");
       return;
     }
 
     if (pinInput !== confirmPinInput) {
-      setError("PINs do not match.");
+      setError("PIN tidak cocok.");
       return;
     }
 
@@ -54,14 +59,16 @@ export default function LockScreenSettings({ user }: LockScreenSettingsProps) {
       const hashedPin = await hashPin(pinInput);
       localStorage.setItem(`finora_lock_pin_${user.uid}`, hashedPin);
       localStorage.setItem(`finora_lock_method_${user.uid}`, "pin");
+      // Aktifkan cookie finora_pin_enabled agar middleware tahu PIN sudah diaktifkan
+      document.cookie = "finora_pin_enabled=true; path=/; SameSite=Lax";
       document.cookie = "finora_pin_verified=true; path=/; SameSite=Lax";
       setLockMethod("pin");
       setPinInput("");
       setConfirmPinInput("");
-      setMessage("PIN enabled successfully! Every page visit or refresh will require this PIN.");
+      setMessage("PIN berhasil diaktifkan! Setiap kali refresh atau masuk baru akan memerlukan PIN ini.");
       setTimeout(() => setMessage(null), 4000);
     } catch {
-      setError("Failed to set PIN. Try again.");
+      setError("Gagal menyimpan PIN. Coba lagi.");
     } finally {
       setSettingPin(false);
     }
@@ -70,11 +77,13 @@ export default function LockScreenSettings({ user }: LockScreenSettingsProps) {
   const handleDisableLock = () => {
     localStorage.removeItem(`finora_lock_method_${user.uid}`);
     localStorage.removeItem(`finora_lock_pin_${user.uid}`);
-    document.cookie = "finora_pin_verified=true; path=/; SameSite=Lax";
+    // Hapus cookie finora_pin_enabled agar middleware tidak lagi meminta PIN
+    document.cookie = "finora_pin_enabled=; path=/; max-age=0; SameSite=Lax";
+    document.cookie = "finora_pin_verified=; path=/; max-age=0; SameSite=Lax";
     setLockMethod("none");
     setPinInput("");
     setConfirmPinInput("");
-    setMessage("PIN lock disabled.");
+    setMessage("Proteksi PIN dinonaktifkan.");
     setTimeout(() => setMessage(null), 4000);
   };
 
@@ -82,10 +91,10 @@ export default function LockScreenSettings({ user }: LockScreenSettingsProps) {
     <div className="space-y-3">
       {/* Current status */}
       <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
-        <span className="text-xs text-slate-500">PIN Protection</span>
+        <span className="text-xs text-slate-500">Proteksi PIN</span>
         <span className={`text-xs font-semibold ${lockMethod === "none" ? "text-slate-400" : "text-emerald-600 dark:text-emerald-400"}`}>
-          {lockMethod === "none" && "Disabled"}
-          {lockMethod === "pin" && "🔒 PIN Active"}
+          {lockMethod === "none" && "Tidak Aktif"}
+          {lockMethod === "pin" && "🔒 PIN Aktif"}
         </span>
       </div>
 
@@ -96,8 +105,8 @@ export default function LockScreenSettings({ user }: LockScreenSettingsProps) {
               <KeyRound className="w-4 h-4" />
             </div>
             <div>
-              <h4 className="font-semibold text-xs text-slate-900 dark:text-white">Setup 4-Digit Security PIN</h4>
-              <p className="text-[11px] text-slate-500">Require PIN code on direct access and page refresh</p>
+              <h4 className="font-semibold text-xs text-slate-900 dark:text-white">Atur PIN Keamanan 4 Digit</h4>
+              <p className="text-[11px] text-slate-500">Wajib masukkan PIN saat buka aplikasi atau refresh halaman</p>
             </div>
           </div>
 
@@ -106,7 +115,7 @@ export default function LockScreenSettings({ user }: LockScreenSettingsProps) {
               type="password"
               inputMode="numeric"
               maxLength={4}
-              placeholder="Enter 4-digit PIN"
+              placeholder="Masukkan PIN 4 digit"
               value={pinInput}
               onChange={(e) => setPinInput(e.target.value.replace(/\D/g, "").slice(0, 4))}
               className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-xs text-center tracking-[0.5em] font-mono"
@@ -115,7 +124,7 @@ export default function LockScreenSettings({ user }: LockScreenSettingsProps) {
               type="password"
               inputMode="numeric"
               maxLength={4}
-              placeholder="Confirm 4-digit PIN"
+              placeholder="Konfirmasi PIN 4 digit"
               value={confirmPinInput}
               onChange={(e) => setConfirmPinInput(e.target.value.replace(/\D/g, "").slice(0, 4))}
               className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-xs text-center tracking-[0.5em] font-mono"
@@ -126,7 +135,7 @@ export default function LockScreenSettings({ user }: LockScreenSettingsProps) {
               disabled={settingPin || pinInput.length < 4}
               className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs rounded-xl transition-colors disabled:opacity-50 cursor-pointer"
             >
-              {settingPin ? "Saving PIN..." : "Enable PIN"}
+              {settingPin ? "Menyimpan PIN..." : "Aktifkan PIN"}
             </button>
           </div>
         </div>
@@ -136,7 +145,7 @@ export default function LockScreenSettings({ user }: LockScreenSettingsProps) {
           onClick={handleDisableLock}
           className="w-full py-2 px-4 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
         >
-          Disable PIN Protection
+          Nonaktifkan Proteksi PIN
         </button>
       )}
 

@@ -22,15 +22,26 @@ export default function EnterPinPage() {
   const [error, setError] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(false);
 
+  // Jika user sudah login dan tidak punya PIN tersimpan, langsung izinkan masuk
   useEffect(() => {
-    // Bersihkan cookie verifikasi lama jika baru saja tiba di halaman ini
-    document.cookie = "finora_pin_verified=; path=/; max-age=0; SameSite=Lax";
-  }, []);
+    if (authLoading) return;
+
+    if (!user) {
+      // Belum login → arahkan ke halaman login
+      router.replace("/login");
+      return;
+    }
+
+    const storedHash = localStorage.getItem(`finora_lock_pin_${user.uid}`);
+    if (!storedHash) {
+      // PIN belum pernah diset, langsung beri akses
+      document.cookie = "finora_pin_verified=true; path=/; SameSite=Lax";
+      router.replace(redirectTo);
+    }
+  }, [authLoading, user, redirectTo, router]);
 
   const handleUnlockSuccess = () => {
-    // Set cookie verifikasi PIN session (berlaku selama sesi browser / tab aktif)
     document.cookie = "finora_pin_verified=true; path=/; SameSite=Lax";
-    sessionStorage.setItem("finora_pin_session", "true");
     router.replace(redirectTo);
   };
 
@@ -39,13 +50,11 @@ export default function EnterPinPage() {
     setError(null);
     try {
       if (!user) {
-        // Jika belum ada user, biarkan lolos ke tujuan atau login
-        handleUnlockSuccess();
+        router.replace("/login");
         return;
       }
 
       const storedHash = localStorage.getItem(`finora_lock_pin_${user.uid}`);
-      // Jika pengguna belum mengatur PIN sama sekali, otomatis buka akses
       if (!storedHash) {
         handleUnlockSuccess();
         return;
@@ -56,11 +65,11 @@ export default function EnterPinPage() {
         localStorage.setItem(`finora_last_active_${user.uid}`, Date.now().toString());
         handleUnlockSuccess();
       } else {
-        setError("Incorrect PIN. Please try again.");
+        setError("PIN salah. Coba lagi.");
         setPin("");
       }
     } catch {
-      setError("An error occurred during verification.");
+      setError("Terjadi kesalahan saat verifikasi.");
       setPin("");
     } finally {
       setVerifying(false);
@@ -90,10 +99,13 @@ export default function EnterPinPage() {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6">
         <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mb-3" />
-        <p className="text-slate-400 text-xs">Loading authentication...</p>
+        <p className="text-slate-400 text-xs">Memuat...</p>
       </div>
     );
   }
+
+  // Jangan render form PIN jika user null atau tidak ada PIN tersimpan
+  if (!user) return null;
 
   return (
     <div className="fixed inset-0 z-[100] bg-gradient-to-b from-slate-900 via-slate-950 to-emerald-950 flex flex-col items-center justify-center p-6">
@@ -106,15 +118,15 @@ export default function EnterPinPage() {
             <path d="M18 12a2 2 0 0 0 0 4h4v-4Z" />
           </svg>
         </div>
-        <h1 className="text-white text-xl font-bold tracking-tight">Finora Security</h1>
+        <h1 className="text-white text-xl font-bold tracking-tight">Finora</h1>
         <p className="text-emerald-300/70 text-xs mt-1">
-          {user?.displayName || user?.email?.split("@")[0] || "User"}
+          {user?.displayName || user?.email?.split("@")[0] || "Pengguna"}
         </p>
       </div>
 
       {/* PIN Keypad Box */}
       <div className="w-full max-w-xs space-y-6">
-        <p className="text-center text-sm text-slate-300 font-medium">Enter 4-digit PIN</p>
+        <p className="text-center text-sm text-slate-300 font-medium">Masukkan PIN 4 digit</p>
 
         {/* PIN Indicators */}
         <div className="flex justify-center gap-4">

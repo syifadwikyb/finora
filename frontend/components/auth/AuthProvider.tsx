@@ -50,13 +50,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIsLocked(false);
         // Hapus cookie verifikasi pin saat user logout
         document.cookie = "finora_pin_verified=; path=/; max-age=0; SameSite=Lax";
+        document.cookie = "finora_pin_enabled=; path=/; max-age=0; SameSite=Lax";
       }
       setLoading(false);
     });
     return unsubscribe;
   }, []);
 
-  // Idle timer — lock the app after 5 min of inactivity
+  // Idle timer — lock the app after 5 min of inactivity (hanya jika PIN aktif)
   useEffect(() => {
     if (!user) return;
 
@@ -65,9 +66,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const resetTimer = () => {
       clearTimeout(timer);
       timer = setTimeout(() => {
-        setIsLocked(true);
-        // Reset cookie agar jika di-refresh otomatis harus masukkan PIN lagi
-        document.cookie = "finora_pin_verified=; path=/; max-age=0; SameSite=Lax";
+        // Cek apakah PIN diaktifkan lewat cookie (bisa dibaca dari document.cookie)
+        const pinEnabled = document.cookie
+          .split("; ")
+          .find((row) => row.startsWith("finora_pin_enabled="))
+          ?.split("=")[1];
+
+        if (pinEnabled === "true") {
+          setIsLocked(true);
+          // Reset cookie agar saat refresh wajib PIN lagi
+          document.cookie = "finora_pin_verified=; path=/; max-age=0; SameSite=Lax";
+        }
       }, IDLE_MS);
     };
 
@@ -91,6 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setIsLocked(false);
     document.cookie = "finora_pin_verified=; path=/; max-age=0; SameSite=Lax";
+    document.cookie = "finora_pin_enabled=; path=/; max-age=0; SameSite=Lax";
     router.push("/login");
   };
 
