@@ -9,19 +9,31 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   const [pinEnabled, setPinEnabled] = useState(false);
 
   useEffect(() => {
-    // Cek apakah PIN diaktifkan dari cookie
+    // Cek apakah PIN diaktifkan dari cookie atau localStorage
     const checkPinEnabled = () => {
-      const enabled = document.cookie
+      const cookieEnabled = document.cookie
         .split("; ")
         .find((row) => row.startsWith("finora_pin_enabled="))
         ?.split("=")[1];
-      setPinEnabled(enabled === "true");
+      
+      const localMethod = user ? localStorage.getItem(`finora_lock_method_${user.uid}`) : null;
+      const isEnabled = cookieEnabled === "true" || localMethod === "pin";
+
+      if (isEnabled && cookieEnabled !== "true") {
+        document.cookie = "finora_pin_enabled=true; path=/; SameSite=Lax";
+      }
+
+      setPinEnabled(isEnabled);
     };
     checkPinEnabled();
-    // Re-check ketika cookie berubah (misalnya setelah enable/disable PIN di profil)
+    // Re-check ketika window fokus atau visibility change
     window.addEventListener("focus", checkPinEnabled);
-    return () => window.removeEventListener("focus", checkPinEnabled);
-  }, []);
+    document.addEventListener("visibilitychange", checkPinEnabled);
+    return () => {
+      window.removeEventListener("focus", checkPinEnabled);
+      document.removeEventListener("visibilitychange", checkPinEnabled);
+    };
+  }, [user]);
 
   return (
     <>

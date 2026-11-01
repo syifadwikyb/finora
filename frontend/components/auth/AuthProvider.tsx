@@ -57,43 +57,93 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return unsubscribe;
   }, []);
 
-  // Idle timer — lock the app after 5 min of inactivity (hanya jika PIN aktif)
+  // Idle timer & background lock — lock the app if inactive or unopened for 5 min (hanya jika PIN aktif)
   useEffect(() => {
     if (!user) return;
 
     let timer: ReturnType<typeof setTimeout>;
 
+    const isPinEnabled = () => {
+      const pinEnabledCookie = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("finora_pin_enabled="))
+        ?.split("=")[1];
+      const pinMethod = localStorage.getItem(`finora_lock_method_${user.uid}`);
+      return pinEnabledCookie === "true" || pinMethod === "pin";
+    };
+
+    const lockApp = () => {
+      setIsLocked(true);
+      document.cookie = "finora_pin_verified=; path=/; max-age=0; SameSite=Lax";
+    };
+
+    const updateLastActive = () => {
+      localStorage.setItem(`finora_last_active_${user.uid}`, Date.now().toString());
+    };
+
+    const checkAndLockIfExpired = () => {
+      if (!isPinEnabled()) return false;
+      const lastActiveStr = localStorage.getItem(`finora_last_active_${user.uid}`);
+      if (lastActiveStr) {
+        const elapsed = Date.now() - parseInt(lastActiveStr, 10);
+        if (elapsed >= IDLE_MS) {
+          lockApp();
+          return true;
+        }
+      }
+      return false;
+    };
+
     const resetTimer = () => {
+      // Jika saat interaksi ternyata waktu sudah melebihi 5 menit, kunci langsung
+      if (checkAndLockIfExpired()) return;
+
+      updateLastActive();
       clearTimeout(timer);
       timer = setTimeout(() => {
-        // Cek apakah PIN diaktifkan lewat cookie (bisa dibaca dari document.cookie)
-        const pinEnabled = document.cookie
-          .split("; ")
-          .find((row) => row.startsWith("finora_pin_enabled="))
-          ?.split("=")[1];
-
-        if (pinEnabled === "true") {
-          setIsLocked(true);
-          // Reset cookie agar saat refresh wajib PIN lagi
-          document.cookie = "finora_pin_verified=; path=/; max-age=0; SameSite=Lax";
+        if (isPinEnabled()) {
+          lockApp();
         }
       }, IDLE_MS);
     };
 
+    // Cek langsung saat mount/buka kembali aplikasi
+    if (!checkAndLockIfExpired()) {
+      resetTimer();
+    }
+
+    // Event saat user membuka kembali tab/aplikasi dari background / layar mati
+    const handleVisibilityOrFocus = () => {
+      if (document.visibilityState === "visible") {
+        if (!checkAndLockIfExpired()) {
+          resetTimer();
+        }
+      } else {
+        // Saat aplikasi ditinggalkan/ditutup/layar mati, simpan timestamp terakhir
+        updateLastActive();
+      }
+    };
+
     const events = ["mousemove", "keydown", "click", "touchstart", "scroll"];
     events.forEach((e) => window.addEventListener(e, resetTimer, { passive: true }));
-    resetTimer(); // Start the timer immediately
+    document.addEventListener("visibilitychange", handleVisibilityOrFocus);
+    window.addEventListener("focus", handleVisibilityOrFocus);
 
     return () => {
       clearTimeout(timer);
       events.forEach((e) => window.removeEventListener(e, resetTimer));
+      document.removeEventListener("visibilitychange", handleVisibilityOrFocus);
+      window.removeEventListener("focus", handleVisibilityOrFocus);
     };
   }, [user]);
 
   const unlock = useCallback(() => {
     setIsLocked(false);
+    if (user) {
+      localStorage.setItem(`finora_last_active_${user.uid}`, Date.now().toString());
+    }
     document.cookie = "finora_pin_verified=true; path=/; SameSite=Lax";
-  }, []);
+  }, [user]);
 
   const handleLogout = async () => {
     await logout();

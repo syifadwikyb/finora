@@ -6,6 +6,7 @@ import { Landmark, Plus, Trash2, PieChart } from "lucide-react";
 
 interface TransactionFormProps {
   initialData?: Transaction | null;
+  defaultType?: "income" | "expense";
   categories: Category[];
   onSubmit: (formData: {
     title: string;
@@ -23,6 +24,7 @@ interface TransactionFormProps {
 
 export default function TransactionForm({
   initialData,
+  defaultType = "expense",
   categories,
   onSubmit,
   onCancel,
@@ -65,13 +67,13 @@ export default function TransactionForm({
       // Form tambah transaksi baru: bersih tanpa memuat nominal atau data transaksi lama
       setTitle("");
       setAmount("");
-      setType("expense");
+      setType(defaultType);
       setCategoryId(categories.length > 0 ? String(categories[0].id) : "");
       setDescription("");
       setTransactionDate(today);
       setAllocations([]);
     }
-  }, [initialData, categories, today]);
+  }, [initialData, defaultType, categories, today]);
 
   const selectedCategory = categories.find((cat) => String(cat.id) === String(categoryId));
   const linkedAccount = selectedCategory?.account;
