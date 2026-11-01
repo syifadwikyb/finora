@@ -390,26 +390,6 @@ export default function DashboardPage() {
                 <ExpenseOverview expenseOverview={data.expenseOverview} />
               </div>
             </div>
-
-            {/* Mobile: tautan cepat ke halaman Transactions */}
-            <div className="block md:hidden">
-              <button
-                type="button"
-                onClick={() => router.push("/transactions")}
-                className="w-full flex items-center justify-between p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs active:scale-[0.99] cursor-pointer hover:border-emerald-500/50 transition-all"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                    <Receipt className="w-5 h-5" />
-                  </div>
-                  <div className="text-left">
-                    <h4 className="text-xs font-bold text-slate-900 dark:text-white">Transaction History</h4>
-                    <p className="text-[11px] text-slate-400">View and manage all transactions</p>
-                  </div>
-                </div>
-                <ArrowRight className="w-4 h-4 text-slate-400" />
-              </button>
-            </div>
           </>
         ) : null}
       </main>
