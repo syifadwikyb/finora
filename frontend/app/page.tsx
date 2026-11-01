@@ -27,6 +27,7 @@ export default function DashboardPage() {
   }, [authLoading, user, router]);
 
   const fetchDashboardData = async () => {
+    if (!user) return;
     setDashboardLoading(true);
     setError(null);
     try {
@@ -95,9 +96,9 @@ export default function DashboardPage() {
                 amount={
                   data.accountsSummary && data.accountsSummary.length > 0
                     ? data.accountsSummary.reduce((acc, a) => {
-                        const sumCat = a.categories?.reduce((s, c) => s + Number(c.current_balance || 0), 0) || 0;
-                        return acc + (sumCat > 0 ? sumCat : Number(a.current_balance || 0));
-                      }, 0)
+                      const sumCat = a.categories?.reduce((s, c) => s + Number(c.current_balance || 0), 0) || 0;
+                      return acc + (sumCat > 0 ? sumCat : Number(a.current_balance || 0));
+                    }, 0)
                     : data.balance
                 }
                 type="balance"

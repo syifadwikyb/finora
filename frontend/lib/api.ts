@@ -1,6 +1,5 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 import { auth } from "@/lib/firebase";
-import { User } from "firebase/auth";
 
 export interface Account {
   id: number;
@@ -90,29 +89,47 @@ export interface DashboardData {
   }[];
 }
 
+// ================= HELPERS =================
+
 // Helper untuk menambahkan token auth ke request
 const getAuthHeaders = async (): Promise<HeadersInit> => {
-  const user = auth.currentUser;
-  const headers: HeadersInit = {
-    "Content-Type": "application/json",
-  };
+  await auth.authStateReady();
 
-  if (user) {
-    try {
-      const token = await user.getIdToken();
-      headers["Authorization"] = `Bearer ${token}`;
-    } catch (e) {
-      console.error("Gagal mendapatkan Firebase ID token:", e);
-    }
+  const user = auth.currentUser;
+  if (!user) {
+    throw new Error("Sesi login tidak ditemukan. Silakan login ulang.");
   }
 
-  return headers;
+  const token = await user.getIdToken();
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
+};
+
+// Ambil uid user yang sedang login (tunggu Firebase siap).
+// Backend membaca userId dari query (?userId=) atau body (user_id).
+const getUserId = async (): Promise<string> => {
+  await auth.authStateReady();
+  const uid = auth.currentUser?.uid;
+  if (!uid) {
+    throw new Error("Sesi login tidak ditemukan. Silakan login ulang.");
+  }
+  return uid;
+};
+
+// Tambahkan ?userId=... ke URL
+const withUserId = async (url: string): Promise<string> => {
+  const userId = await getUserId();
+  const sep = url.includes("?") ? "&" : "?";
+  return `${url}${sep}userId=${encodeURIComponent(userId)}`;
 };
 
 // ================= ACCOUNTS API =================
 export const getAccounts = async () => {
   const headers = await getAuthHeaders();
-  const res = await fetch(`${API_URL}/accounts`, { headers, cache: "no-store" });
+  const url = await withUserId(`${API_URL}/accounts`);
+  const res = await fetch(url, { headers, cache: "no-store" });
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
     throw new Error(errorData.message || "Failed to fetch accounts");
@@ -122,7 +139,8 @@ export const getAccounts = async () => {
 
 export const getAccountById = async (id: number) => {
   const headers = await getAuthHeaders();
-  const res = await fetch(`${API_URL}/accounts/${id}`, { headers, cache: "no-store" });
+  const url = await withUserId(`${API_URL}/accounts/${id}`);
+  const res = await fetch(url, { headers, cache: "no-store" });
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
     throw new Error(errorData.message || "Failed to fetch account");
@@ -137,10 +155,11 @@ export const createAccount = async (data: {
   current_balance?: number;
 }) => {
   const headers = await getAuthHeaders();
+  const user_id = await getUserId();
   const res = await fetch(`${API_URL}/accounts`, {
     method: "POST",
     headers,
-    body: JSON.stringify(data),
+    body: JSON.stringify({ ...data, user_id }),
   });
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
@@ -154,10 +173,11 @@ export const updateAccount = async (
   data: { name?: string; type?: string; account_number?: string }
 ) => {
   const headers = await getAuthHeaders();
+  const user_id = await getUserId();
   const res = await fetch(`${API_URL}/accounts/${id}`, {
     method: "PUT",
     headers,
-    body: JSON.stringify(data),
+    body: JSON.stringify({ ...data, user_id }),
   });
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
@@ -168,10 +188,8 @@ export const updateAccount = async (
 
 export const deleteAccount = async (id: number) => {
   const headers = await getAuthHeaders();
-  const res = await fetch(`${API_URL}/accounts/${id}`, {
-    method: "DELETE",
-    headers,
-  });
+  const url = await withUserId(`${API_URL}/accounts/${id}`);
+  const res = await fetch(url, { method: "DELETE", headers });
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
     throw new Error(errorData.message || "Failed to delete account");
@@ -182,7 +200,8 @@ export const deleteAccount = async (id: number) => {
 // ================= CATEGORIES API =================
 export const getCategories = async () => {
   const headers = await getAuthHeaders();
-  const res = await fetch(`${API_URL}/categories`, { headers, cache: "no-store" });
+  const url = await withUserId(`${API_URL}/categories`);
+  const res = await fetch(url, { headers, cache: "no-store" });
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
     throw new Error(errorData.message || "Failed to fetch categories");
@@ -192,10 +211,11 @@ export const getCategories = async () => {
 
 export const createCategory = async (data: { name: string; account_id?: number | null }) => {
   const headers = await getAuthHeaders();
+  const user_id = await getUserId();
   const res = await fetch(`${API_URL}/categories`, {
     method: "POST",
     headers,
-    body: JSON.stringify(data),
+    body: JSON.stringify({ ...data, user_id }),
   });
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
@@ -209,10 +229,11 @@ export const updateCategory = async (
   data: { name: string; account_id?: number | null }
 ) => {
   const headers = await getAuthHeaders();
+  const user_id = await getUserId();
   const res = await fetch(`${API_URL}/categories/${id}`, {
     method: "PUT",
     headers,
-    body: JSON.stringify(data),
+    body: JSON.stringify({ ...data, user_id }),
   });
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
@@ -223,10 +244,8 @@ export const updateCategory = async (
 
 export const deleteCategory = async (id: number) => {
   const headers = await getAuthHeaders();
-  const res = await fetch(`${API_URL}/categories/${id}`, {
-    method: "DELETE",
-    headers,
-  });
+  const url = await withUserId(`${API_URL}/categories/${id}`);
+  const res = await fetch(url, { method: "DELETE", headers });
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
     throw new Error(errorData.message || "Failed to delete category");
@@ -239,6 +258,7 @@ export const getTransactions = async (filters: TransactionFilters = {}) => {
   const headers = await getAuthHeaders();
   const query = new URLSearchParams();
 
+  query.append("userId", await getUserId());
   if (filters.type) query.append("type", filters.type);
   if (filters.category_id) query.append("category_id", String(filters.category_id));
   if (filters.account_id) query.append("account_id", String(filters.account_id));
@@ -249,7 +269,7 @@ export const getTransactions = async (filters: TransactionFilters = {}) => {
   if (filters.page) query.append("page", String(filters.page));
   if (filters.limit) query.append("limit", String(filters.limit));
 
-  const url = `${API_URL}/transactions${query.toString() ? `?${query.toString()}` : ""}`;
+  const url = `${API_URL}/transactions?${query.toString()}`;
   const res = await fetch(url, { headers, cache: "no-store" });
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
@@ -269,10 +289,11 @@ export const createTransaction = async (data: {
   transaction_date: string;
 }) => {
   const headers = await getAuthHeaders();
+  const user_id = await getUserId();
   const res = await fetch(`${API_URL}/transactions`, {
     method: "POST",
     headers,
-    body: JSON.stringify(data),
+    body: JSON.stringify({ ...data, user_id }),
   });
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
@@ -295,10 +316,11 @@ export const updateTransaction = async (
   }
 ) => {
   const headers = await getAuthHeaders();
+  const user_id = await getUserId();
   const res = await fetch(`${API_URL}/transactions/${id}`, {
     method: "PUT",
     headers,
-    body: JSON.stringify(data),
+    body: JSON.stringify({ ...data, user_id }),
   });
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
@@ -309,10 +331,8 @@ export const updateTransaction = async (
 
 export const deleteTransaction = async (id: number) => {
   const headers = await getAuthHeaders();
-  const res = await fetch(`${API_URL}/transactions/${id}`, {
-    method: "DELETE",
-    headers,
-  });
+  const url = await withUserId(`${API_URL}/transactions/${id}`);
+  const res = await fetch(url, { method: "DELETE", headers });
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
     throw new Error(errorData.message || "Failed to delete transaction");
@@ -323,10 +343,13 @@ export const deleteTransaction = async (id: number) => {
 // ================= DASHBOARD API =================
 export const getDashboard = async () => {
   const headers = await getAuthHeaders();
-  const res = await fetch(`${API_URL}/dashboard`, { headers, cache: "no-store" });
+  const url = await withUserId(`${API_URL}/dashboard`);
+  const res = await fetch(url, { headers, cache: "no-store" });
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.message || "Failed to fetch dashboard data");
+    throw new Error(
+      errorData.message || `Failed to fetch dashboard data (${res.status})`
+    );
   }
   return res.json();
 };
