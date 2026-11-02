@@ -18,7 +18,7 @@ import {
   getTransactions,
   updateTransaction,
 } from "@/lib/api";
-import { AlertCircle, Plus, RefreshCw } from "lucide-react";
+import { AlertCircle, MinusCircle, PlusCircle, RefreshCw } from "lucide-react";
 
 export default function TransactionsPage() {
   const { user, loading: authLoading } = useAuth();
@@ -40,6 +40,7 @@ export default function TransactionsPage() {
   // Modal & Edit state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [defaultType, setDefaultType] = useState<"income" | "expense">("expense");
   const [modalLoading, setModalLoading] = useState(false);
 
   // Delete confirmation state
@@ -103,8 +104,10 @@ export default function TransactionsPage() {
     setFilters({ type: "", category_id: "", date: "", search: "" });
   };
 
-  const handleOpenAdd = () => {
+  // Dipanggil oleh tombol Add Income / Add Expense
+  const handleOpenAdd = (type: "income" | "expense") => {
     setSelectedTransaction(null);
+    setDefaultType(type);
     setIsModalOpen(true);
   };
 
@@ -172,6 +175,38 @@ export default function TransactionsPage() {
       )}
 
       <main className="flex-1 p-4 md:p-8 space-y-6 max-w-7xl w-full mx-auto">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white">Transaction History</h2>
+            <p className="text-xs text-slate-500">Filter or record new income and expenses</p>
+          </div>
+
+          {/* Add Income / Add Expense: tombol solid, animasi seperti dashboard */}
+          <div className="grid grid-cols-2 sm:flex items-center gap-2 sm:gap-3">
+            <button
+              type="button"
+              onClick={() => handleOpenAdd("income")}
+              className="group inline-flex items-center justify-center gap-2.5 pl-2.5 pr-5 py-2.5 rounded-2xl bg-gradient-to-br from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white text-xs font-bold shadow-md shadow-emerald-500/25 active:scale-95 transition-all cursor-pointer"
+            >
+              <span className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                <PlusCircle className="w-4 h-4 text-white" />
+              </span>
+              Add Income
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleOpenAdd("expense")}
+              className="group inline-flex items-center justify-center gap-2.5 pl-2.5 pr-5 py-2.5 rounded-2xl bg-gradient-to-br from-rose-600 to-rose-500 hover:from-rose-700 hover:to-rose-600 text-white text-xs font-bold shadow-md shadow-rose-500/25 active:scale-95 transition-all cursor-pointer"
+            >
+              <span className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                <MinusCircle className="w-4 h-4 text-white" />
+              </span>
+              Add Expense
+            </button>
+          </div>
+        </div>
+
         {/* Filters */}
         <TransactionFilter
           filters={filters}
@@ -215,6 +250,7 @@ export default function TransactionsPage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         initialData={selectedTransaction}
+        defaultType={defaultType}
         categories={categories}
         onSubmit={handleSaveTransaction}
         loading={modalLoading}

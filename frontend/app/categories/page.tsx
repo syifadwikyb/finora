@@ -6,7 +6,7 @@ import CategoryList from "@/components/categories/CategoryList";
 import CategoryForm from "@/components/categories/CategoryForm";
 import ConfirmModal from "@/components/ui/ConfirmModal";
 import { Account, Category, createCategory, deleteCategory, getAccounts, getCategories, updateCategory } from "@/lib/api";
-import { AlertCircle, Plus, RefreshCw } from "lucide-react";
+import { AlertCircle, FolderPlus, RefreshCw } from "lucide-react";
 
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useRouter } from "next/navigation";
@@ -136,6 +136,27 @@ export default function CategoriesPage() {
       )}
 
       <main className="flex-1 p-4 md:p-8 space-y-6 max-w-7xl w-full mx-auto">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white">Category List</h2>
+            <p className="text-xs text-slate-500">
+              Each category links to an account for automatic balance tracking
+            </p>
+          </div>
+
+          {/* Add Category: tombol solid, animasi seperti dashboard */}
+          <button
+            type="button"
+            onClick={handleOpenAdd}
+            className="group self-start sm:self-auto inline-flex items-center gap-2.5 pl-2.5 pr-5 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md shadow-emerald-500/25 active:scale-95 transition-all cursor-pointer"
+          >
+            <span className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+              <FolderPlus className="w-4 h-4 text-white" />
+            </span>
+            Add Category
+          </button>
+        </div>
+
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 space-y-3">
             <div className="w-8 h-8 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin" />

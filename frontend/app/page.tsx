@@ -24,7 +24,6 @@ import {
   MinusCircle,
   FolderPlus,
   ArrowRight,
-  Receipt,
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import SummaryCard from "@/components/dashboard/SummaryCard";
@@ -233,10 +232,11 @@ export default function DashboardPage() {
             Quick Actions
           </h2>
           <div className="grid grid-cols-4 gap-2 sm:gap-3">
+            {/* Income */}
             <button
               type="button"
               onClick={() => handleOpenTransaction("income")}
-              className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-1.5 sm:gap-3 px-1 py-3 sm:p-3.5 rounded-2xl bg-gradient-to-br from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white shadow-sm active:scale-95 transition-all group cursor-pointer"
+              className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-1.5 sm:gap-3 px-1 py-3 sm:p-3.5 rounded-2xl bg-gradient-to-br from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white shadow-md shadow-emerald-500/25 active:scale-95 transition-all group cursor-pointer"
             >
               <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
                 <PlusCircle className="w-5 h-5 text-white" />
@@ -247,10 +247,11 @@ export default function DashboardPage() {
               </div>
             </button>
 
+            {/* Expense */}
             <button
               type="button"
               onClick={() => handleOpenTransaction("expense")}
-              className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-1.5 sm:gap-3 px-1 py-3 sm:p-3.5 rounded-2xl bg-gradient-to-br from-rose-600 to-rose-500 hover:from-rose-700 hover:to-rose-600 text-white shadow-sm active:scale-95 transition-all group cursor-pointer"
+              className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-1.5 sm:gap-3 px-1 py-3 sm:p-3.5 rounded-2xl bg-gradient-to-br from-rose-600 to-rose-500 hover:from-rose-700 hover:to-rose-600 text-white shadow-md shadow-rose-500/25 active:scale-95 transition-all group cursor-pointer"
             >
               <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
                 <MinusCircle className="w-5 h-5 text-white" />
@@ -261,30 +262,32 @@ export default function DashboardPage() {
               </div>
             </button>
 
+            {/* Account */}
             <button
               type="button"
               onClick={() => setIsAccountModalOpen(true)}
-              className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-1.5 sm:gap-3 px-1 py-3 sm:p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-emerald-500/50 text-slate-800 dark:text-slate-100 shadow-xs active:scale-95 transition-all group cursor-pointer"
+              className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-1.5 sm:gap-3 px-1 py-3 sm:p-3.5 rounded-2xl bg-gradient-to-br from-indigo-600 to-indigo-500 hover:from-indigo-700 hover:to-indigo-600 text-white shadow-md shadow-indigo-500/25 active:scale-95 transition-all group cursor-pointer"
             >
-              <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                <Landmark className="w-5 h-5" />
+              <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                <Landmark className="w-5 h-5 text-white" />
               </div>
               <div className="text-center sm:text-left min-w-0">
-                <span className="hidden sm:block text-[11px] font-semibold text-slate-400 leading-tight">Add</span>
+                <span className="hidden sm:block text-[11px] font-semibold opacity-90 leading-tight">Add</span>
                 <span className="block text-[11px] sm:text-sm font-bold truncate">Account</span>
               </div>
             </button>
 
+            {/* Category */}
             <button
               type="button"
               onClick={() => setIsCategoryModalOpen(true)}
-              className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-1.5 sm:gap-3 px-1 py-3 sm:p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-emerald-500/50 text-slate-800 dark:text-slate-100 shadow-xs active:scale-95 transition-all group cursor-pointer"
+              className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-1.5 sm:gap-3 px-1 py-3 sm:p-3.5 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-400 hover:from-amber-600 hover:to-amber-500 text-white shadow-md shadow-amber-500/25 active:scale-95 transition-all group cursor-pointer"
             >
-              <div className="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                <FolderPlus className="w-5 h-5" />
+              <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                <FolderPlus className="w-5 h-5 text-white" />
               </div>
               <div className="text-center sm:text-left min-w-0">
-                <span className="hidden sm:block text-[11px] font-semibold text-slate-400 leading-tight">Add</span>
+                <span className="hidden sm:block text-[11px] font-semibold opacity-90 leading-tight">Add</span>
                 <span className="block text-[11px] sm:text-sm font-bold truncate">Category</span>
               </div>
             </button>
