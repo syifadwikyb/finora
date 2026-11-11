@@ -62,12 +62,12 @@ export default function LockScreen({ user, onUnlock }: LockScreenProps) {
   return (
     <div className="fixed inset-0 z-[100] bg-gradient-to-b from-slate-900 via-slate-950 to-emerald-950 flex flex-col items-center justify-center p-6">
       <div className="mb-8 flex flex-col items-center">
-        <div className="w-16 h-16 rounded-2xl bg-emerald-700 flex items-center justify-center text-white shadow-2xl shadow-emerald-500/30 mb-4">
-          <svg className="w-9 h-9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" />
-            <path d="M3 5v14a2 2 0 0 0 2 2h16v-5" />
-            <path d="M18 12a2 2 0 0 0 0 4h4v-4Z" />
-          </svg>
+        <div className="w-16 h-16 rounded-2xl bg-[#0e382b] flex items-center justify-center overflow-hidden shadow-2xl shadow-emerald-950/50 mb-4 border border-emerald-800/30">
+          <img
+            src="finora_logo.png"
+            alt="Finora Logo"
+            className="w-10 h-10 object-contain"
+          />
         </div>
         <h1 className="text-white text-xl font-bold tracking-tight">Finora</h1>
         <p className="text-emerald-300/60 text-xs mt-1">
