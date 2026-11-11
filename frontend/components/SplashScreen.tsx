@@ -57,10 +57,7 @@ export default function SplashScreen({ onFinish }: { onFinish: () => void }) {
       {/* Logo container */}
       <div className="relative flex flex-col items-center">
         {/* Logo: muncul dengan efek zoom-in */}
-        <div
-          className={`relative mb-6 transition-all duration-700 ease-out ${phase === "enter" ? "opacity-0 scale-50" : "opacity-100 scale-100"
-            }`}
-        >
+        <div className="relative mb-6">
           <div className="absolute inset-0 rounded-full bg-white/25 dark:bg-emerald-400/20 blur-2xl scale-150 animate-pulse" />
           <Image
             src="/finora_logo.png"
