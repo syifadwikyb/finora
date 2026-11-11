@@ -186,7 +186,7 @@ export default function TransactionsPage() {
             <button
               type="button"
               onClick={() => handleOpenAdd("income")}
-              className="group inline-flex items-center justify-center gap-2.5 pl-2.5 pr-5 py-2.5 rounded-2xl bg-gradient-to-br from-emerald-600 to-emerald-50 hover:from-emerald-700 hover:to-emerald-600 text-white text-xs font-bold shadow-md shadow-emerald-500/25 active:scale-95 transition-all cursor-pointer"
+              className="group inline-flex items-center justify-center gap-2.5 pl-2.5 pr-5 py-2.5 rounded-2xl bg-gradient-to-br from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white text-xs font-bold shadow-md shadow-emerald-500/25 active:scale-95 transition-all cursor-pointer"
             >
               <span className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
                 <PlusCircle className="w-4 h-4 text-white" />
