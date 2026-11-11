@@ -19,8 +19,12 @@ export default function Sidebar() {
   return (
     <aside className="hidden md:flex flex-col w-64 border-r border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 h-screen sticky top-0 self-start shrink-0 z-30 overflow-y-auto">
       <div className="h-20 px-6 flex items-center gap-3 border-b border-slate-200/80 dark:border-slate-800 shrink-0">
-        <div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-white font-bold text-xl shadow-md shadow-emerald-500/20">
-          <Wallet className="w-5 h-5" />
+        <div className="w-10 h-10 rounded-xl bg-emerald-700 flex items-center justify-center text-white font-bold text-xl shadow-md shadow-emerald-500/20">
+          <img
+            src="/finora_logo.png"
+            alt="Finora Logo"
+            className="w-full h-full object-cover"
+          />
         </div>
         <div>
           <h1 className="font-bold text-lg tracking-tight text-slate-900 dark:text-white">Finora</h1>

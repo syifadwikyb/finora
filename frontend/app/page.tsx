@@ -187,7 +187,7 @@ export default function DashboardPage() {
 
       {/* Floating Toast */}
       {toastMessage && (
-        <div className="fixed bottom-24 md:bottom-6 left-4 right-4 sm:left-auto sm:right-6 z-50 bg-slate-900 text-white dark:bg-emerald-600 px-4 py-3 rounded-xl shadow-xs text-xs font-semibold text-center sm:text-left animate-in fade-in slide-in-from-bottom-2">
+        <div className="fixed bottom-24 md:bottom-6 left-4 right-4 sm:left-auto sm:right-6 z-50 bg-slate-900 text-white dark:bg-emerald-700 px-4 py-3 rounded-xl shadow-xs text-xs font-semibold text-center sm:text-left animate-in fade-in slide-in-from-bottom-2">
           {toastMessage}
         </div>
       )}
@@ -339,7 +339,7 @@ export default function DashboardPage() {
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex items-center gap-2.5 min-w-0">
-                            <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                            <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
                               <Landmark className="w-4 h-4" />
                             </div>
                             <div className="min-w-0">

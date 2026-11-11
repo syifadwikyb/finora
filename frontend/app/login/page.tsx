@@ -80,7 +80,11 @@ export default function LoginPage() {
         <div className="sm:mx-auto sm:w-full sm:max-w-md mb-8 text-center">
           <div className="flex justify-center mb-5">
             <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center shadow-2xl shadow-black/20">
-              <Wallet className="w-8 h-8 text-white" />
+              <img
+                src="/finora_logo.png"
+                alt="Finora Logo"
+                className="w-full h-full object-cover"
+              />
             </div>
           </div>
           <h1 className="text-3xl font-extrabold text-white tracking-tight">

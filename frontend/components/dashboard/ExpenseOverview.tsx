@@ -29,7 +29,7 @@ export default function ExpenseOverview({ expenseOverview }: ExpenseOverviewProp
         <div className="space-y-4 flex-1">
           {expenseOverview.map((item, idx) => {
             const colors = [
-              "bg-emerald-500",
+              "bg-emerald-700",
               "bg-indigo-500",
               "bg-amber-500",
               "bg-sky-500",

@@ -183,7 +183,7 @@ export default function TransactionForm({
           type="button"
           onClick={() => setType("income")}
           className={`py-2 rounded-lg font-semibold transition-all cursor-pointer ${type === "income"
-            ? "bg-emerald-600 text-white shadow-xs"
+            ? "bg-emerald-700 text-white shadow-xs"
             : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
             }`}
         >
@@ -280,7 +280,7 @@ export default function TransactionForm({
               type="button"
               onClick={handleAddAllocation}
               disabled={targetCategories.length === 0}
-              className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-semibold transition-colors disabled:opacity-50 cursor-pointer"
+              className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-700 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-semibold transition-colors disabled:opacity-50 cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               Add Split
@@ -385,7 +385,7 @@ export default function TransactionForm({
         <button
           type="submit"
           disabled={loading}
-          className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition-colors disabled:opacity-50 cursor-pointer"
+          className="px-5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-700 text-white font-semibold transition-colors disabled:opacity-50 cursor-pointer"
         >
           {loading ? "Saving..." : initialData ? "Update Transaction" : "Save Transaction"}
         </button>

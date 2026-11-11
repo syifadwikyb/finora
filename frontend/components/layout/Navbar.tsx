@@ -15,7 +15,7 @@ export default function Navbar({ title = "Dashboard", subtitle = "Manage your mo
 
       <div className="flex items-center gap-2">
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-xs font-semibold border border-emerald-100 dark:border-emerald-900">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span className="w-2 h-2 rounded-full bg-emerald-700 animate-pulse"></span>
           Finora App
         </div>
       </div>

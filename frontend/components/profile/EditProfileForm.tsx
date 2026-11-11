@@ -196,7 +196,7 @@ export default function EditProfileForm({
           <button
             type="submit"
             disabled={profileSaving}
-            className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md shadow-emerald-500/20 transition-all hover:scale-102 disabled:opacity-50"
+            className="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md shadow-emerald-500/20 transition-all hover:scale-102 disabled:opacity-50"
           >
             {profileSaving ? "Saving..." : "Save Profile Changes"}
           </button>
