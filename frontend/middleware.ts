@@ -8,8 +8,10 @@ export function middleware(request: NextRequest) {
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api") ||
+    pathname.startsWith("/icons") ||
     pathname.includes(".") ||
-    pathname === "/favicon.ico"
+    pathname === "/manifest.json" ||
+    pathname === "/finora_logo.png"
   ) {
     return NextResponse.next();
   }
@@ -45,6 +47,6 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico).*)",
+    "/((?!api|_next/static|_next/image|icons|manifest.json|sw.js|finora_logo.png|favicon.ico).*)",
   ],
 };

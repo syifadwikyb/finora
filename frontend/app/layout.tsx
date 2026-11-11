@@ -16,12 +16,13 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "Finora - Personal Finance Tracker",
+  title: "Finora",
   description: "Manage your money, simply. Track income, expenses, and categories easily.",
   manifest: "/manifest.json",
   icons: {
-    icon: "/icons/icon-192.png",
-    apple: "/icons/apple-touch-icon.png",
+    icon: "/finora_bg.png",
+    shortcut: "/finora_bg.png",
+    apple: "/finora_bg.png",
   },
   appleWebApp: {
     capable: true,
@@ -31,7 +32,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#059669",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f8fafc" },
+    { media: "(prefers-color-scheme: dark)", color: "#020617" },
+  ],
 };
 
 export default function RootLayout({
