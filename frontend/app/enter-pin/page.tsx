@@ -126,11 +126,12 @@ function EnterPinContent() {
     <div className="fixed inset-0 z-[100] bg-gradient-to-b from-slate-900 via-slate-950 to-emerald-950 flex flex-col items-center justify-center p-6">
       {/* Brand Icon */}
       <div className="mb-8 flex flex-col items-center">
-        <div className="w-16 h-16 rounded-2xl bg-emerald-700 flex items-center justify-center text-white shadow-2xl shadow-emerald-500/30 mb-4">
+        <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center shadow-2xl shadow-black/20">
           <img
             src="/finora_logo.png"
-            alt="Finora"
-            className="w-full h-full object-cover" />
+            alt="Finora Logo"
+            className="w-full h-full object-cover"
+          />
         </div>
         <h1 className="text-white text-xl font-bold tracking-tight">Finora</h1>
         <p className="text-emerald-300/70 text-xs mt-1">

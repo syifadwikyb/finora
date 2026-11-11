@@ -25,7 +25,7 @@ export default function SplashScreen({ onFinish }: { onFinish: () => void }) {
 
   return (
     <div
-      className={`fixed inset-0 z-[200] flex flex-col items-center justify-center transition-all duration-500 ease-in-out bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-800 dark:from-slate-950 dark:via-emerald-950 dark:to-slate-950 ${phase === "exit" ? "opacity-0 scale-105" : phase === "visible" ? "opacity-100 scale-100" : "opacity-0 scale-95"
+      className={`fixed inset-0 z-[200] flex flex-col items-center justify-center transition-all duration-500 ease-in-out bg-gradient-to-br from-[#03402C] via-emerald-900 to-slate-950 ${phase === "exit" ? "opacity-0 scale-105" : phase === "visible" ? "opacity-100 scale-100" : "opacity-0 scale-95"
         }`}
     >
       {/* Background decorative elements */}
