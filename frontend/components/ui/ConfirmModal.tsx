@@ -40,8 +40,8 @@ export default function ConfirmModal({
       icon: <AlertTriangle className="w-5 h-5" />,
     },
     primary: {
-      bg: "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400",
-      btn: "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20",
+      bg: "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400",
+      btn: "bg-emerald-700 hover:bg-emerald-700 text-white shadow-emerald-600/20",
       icon: <CheckCircle2 className="w-5 h-5" />,
     },
   }[variant];

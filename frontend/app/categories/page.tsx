@@ -148,7 +148,7 @@ export default function CategoriesPage() {
           <button
             type="button"
             onClick={handleOpenAdd}
-            className="group self-start sm:self-auto inline-flex items-center gap-2.5 pl-2.5 pr-5 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md shadow-emerald-500/25 active:scale-95 transition-all cursor-pointer"
+            className="group self-start sm:self-auto inline-flex items-center gap-2.5 pl-2.5 pr-5 py-2.5 rounded-2xl bg-emerald-700 hover:bg-emerald-700 text-white text-xs font-bold shadow-md shadow-emerald-500/25 active:scale-95 transition-all cursor-pointer"
           >
             <span className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
               <FolderPlus className="w-4 h-4 text-white" />

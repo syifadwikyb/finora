@@ -33,7 +33,7 @@ export default function RecentTransactions({ transactions }: RecentTransactionsP
           <p className="text-xs text-slate-400 mt-1">Add your first transaction to get started.</p>
           <Link
             href="/transactions"
-            className="mt-4 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg transition-colors"
+            className="mt-4 px-4 py-2 bg-emerald-700 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg transition-colors"
           >
             Add Transaction
           </Link>
@@ -49,11 +49,10 @@ export default function RecentTransactions({ transactions }: RecentTransactionsP
               >
                 <div className="flex items-center gap-3">
                   <div
-                    className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                      isIncome
-                        ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400"
-                        : "bg-rose-100 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400"
-                    }`}
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${isIncome
+                      ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400"
+                      : "bg-rose-100 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400"
+                      }`}
                   >
                     {isIncome ? <ArrowUpRight className="w-5 h-5" /> : <ArrowDownLeft className="w-5 h-5" />}
                   </div>
@@ -70,9 +69,8 @@ export default function RecentTransactions({ transactions }: RecentTransactionsP
 
                 <div className="text-right pl-2 shrink-0">
                   <span
-                    className={`font-bold text-sm ${
-                      isIncome ? "text-emerald-600 dark:text-emerald-400" : "text-slate-900 dark:text-white"
-                    }`}
+                    className={`font-bold text-sm ${isIncome ? "text-emerald-600 dark:text-emerald-400" : "text-slate-900 dark:text-white"
+                      }`}
                   >
                     {isIncome ? "+" : "-"} {formatCurrency(Number(tx.amount))}
                   </span>

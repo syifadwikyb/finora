@@ -67,7 +67,7 @@ export default function TransactionFilter({
           <button
             onClick={() => onFilterChange({ type: "income" })}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${activeType === "income"
-              ? "bg-emerald-600 text-white shadow-xs"
+              ? "bg-emerald-700 text-white shadow-xs"
               : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
           >

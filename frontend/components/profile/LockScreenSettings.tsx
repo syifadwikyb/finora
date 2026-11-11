@@ -133,7 +133,7 @@ export default function LockScreenSettings({ user }: LockScreenSettingsProps) {
               type="button"
               onClick={handleSetPin}
               disabled={settingPin || pinInput.length < 4}
-              className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs rounded-xl transition-colors disabled:opacity-50 cursor-pointer"
+              className="w-full py-2 bg-emerald-700 hover:bg-emerald-700 text-white font-medium text-xs rounded-xl transition-colors disabled:opacity-50 cursor-pointer"
             >
               {settingPin ? "Menyimpan PIN..." : "Aktifkan PIN"}
             </button>

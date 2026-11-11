@@ -173,7 +173,7 @@ export default function AccountsPage() {
           </div>
           <button
             onClick={handleOpenAdd}
-            className="self-start sm:self-auto flex items-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-semibold rounded-2xl shadow-md transition-all cursor-pointer"
+            className="self-start sm:self-auto flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-2xl shadow-md transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             Add Account
@@ -207,7 +207,7 @@ export default function AccountsPage() {
             </p>
             <button
               onClick={handleOpenAdd}
-              className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-semibold hover:bg-emerald-700 cursor-pointer"
+              className="px-4 py-2 bg-emerald-700 text-white rounded-xl text-xs font-semibold hover:bg-emerald-700 cursor-pointer"
             >
               Add Now
             </button>
@@ -358,7 +358,7 @@ export default function AccountsPage() {
                 <button
                   type="submit"
                   disabled={modalLoading}
-                  className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition-colors disabled:opacity-50 cursor-pointer"
+                  className="px-5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-700 text-white font-semibold transition-colors disabled:opacity-50 cursor-pointer"
                 >
                   {modalLoading ? "Saving..." : "Save Account"}
                 </button>

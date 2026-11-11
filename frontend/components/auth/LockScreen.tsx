@@ -62,7 +62,7 @@ export default function LockScreen({ user, onUnlock }: LockScreenProps) {
   return (
     <div className="fixed inset-0 z-[100] bg-gradient-to-b from-slate-900 via-slate-950 to-emerald-950 flex flex-col items-center justify-center p-6">
       <div className="mb-8 flex flex-col items-center">
-        <div className="w-16 h-16 rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-2xl shadow-emerald-500/30 mb-4">
+        <div className="w-16 h-16 rounded-2xl bg-emerald-700 flex items-center justify-center text-white shadow-2xl shadow-emerald-500/30 mb-4">
           <svg className="w-9 h-9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" />
             <path d="M3 5v14a2 2 0 0 0 2 2h16v-5" />
@@ -82,11 +82,10 @@ export default function LockScreen({ user, onUnlock }: LockScreenProps) {
           {[0, 1, 2, 3].map((i) => (
             <div
               key={i}
-              className={`w-4 h-4 rounded-full transition-all duration-200 ${
-                i < pin.length
-                  ? "bg-emerald-500 scale-110 shadow-lg shadow-emerald-500/50"
-                  : "bg-slate-700 border border-slate-600"
-              }`}
+              className={`w-4 h-4 rounded-full transition-all duration-200 ${i < pin.length
+                ? "bg-emerald-700 scale-110 shadow-lg shadow-emerald-500/50"
+                : "bg-slate-700 border border-slate-600"
+                }`}
             />
           ))}
         </div>
