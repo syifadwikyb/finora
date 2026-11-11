@@ -4,6 +4,9 @@ import { useState, useEffect } from "react";
 import { Category, Transaction } from "@/lib/api";
 import { Landmark, Plus, Trash2, PieChart } from "lucide-react";
 
+const toDigits = (text: string) => text.replace(/\D/g, "").replace(/^0+(?=\d)/, "");
+const withDots = (digits: string) => digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+
 interface TransactionFormProps {
   initialData?: Transaction | null;
   defaultType?: "income" | "expense";
@@ -46,25 +49,23 @@ export default function TransactionForm({
     setErrorMsg("");
     if (initialData) {
       setTitle(initialData.title || "");
-      setAmount(initialData.amount !== undefined && initialData.amount !== null ? String(initialData.amount) : "");
+      setAmount(initialData.amount !== undefined && initialData.amount !== null ? String(Math.round(Number(initialData.amount))) : "");
       setType(initialData.type || "expense");
       setCategoryId(initialData.category_id ? String(initialData.category_id) : (categories.length > 0 ? String(categories[0].id) : ""));
       setDescription(initialData.description || "");
       setTransactionDate(initialData.transaction_date ? initialData.transaction_date.split("T")[0] : today);
-      
-      // Pertahankan history alokasi kategori yang sudah terhubung sebelumnya
+
       if (initialData.type === "income" && Array.isArray(initialData.allocations) && initialData.allocations.length > 0) {
         setAllocations(
           initialData.allocations.map((a) => ({
             category_id: String(a.category_id),
-            amount: a.amount !== undefined && a.amount !== null ? String(a.amount) : "",
+            amount: a.amount !== undefined && a.amount !== null ? String(Math.round(Number(a.amount))) : "",
           }))
         );
       } else {
         setAllocations([]);
       }
     } else {
-      // Form tambah transaksi baru: bersih tanpa memuat nominal atau data transaksi lama
       setTitle("");
       setAmount("");
       setType(defaultType);
@@ -171,22 +172,20 @@ export default function TransactionForm({
         <button
           type="button"
           onClick={() => setType("expense")}
-          className={`py-2 rounded-lg font-semibold transition-all cursor-pointer ${
-            type === "expense"
-              ? "bg-rose-600 text-white shadow-xs"
-              : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
-          }`}
+          className={`py-2 rounded-lg font-semibold transition-all cursor-pointer ${type === "expense"
+            ? "bg-rose-600 text-white shadow-xs"
+            : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+            }`}
         >
           Expense (Money Out)
         </button>
         <button
           type="button"
           onClick={() => setType("income")}
-          className={`py-2 rounded-lg font-semibold transition-all cursor-pointer ${
-            type === "income"
-              ? "bg-emerald-600 text-white shadow-xs"
-              : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
-          }`}
+          className={`py-2 rounded-lg font-semibold transition-all cursor-pointer ${type === "income"
+            ? "bg-emerald-600 text-white shadow-xs"
+            : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+            }`}
         >
           Income (Money In)
         </button>
@@ -210,11 +209,11 @@ export default function TransactionForm({
         <div>
           <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Amount (Rp) *</label>
           <input
-            type="number"
-            placeholder="e.g. 50000"
-            min="1"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            type="text"
+            inputMode="numeric"
+            placeholder="e.g. 50.000"
+            value={withDots(amount)}
+            onChange={(e) => setAmount(toDigits(e.target.value))}
             className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
             required
           />
@@ -317,11 +316,11 @@ export default function TransactionForm({
                   <div className="w-32 sm:w-40 relative">
                     <span className="absolute left-2.5 top-1.5 text-slate-400 text-[11px]">Rp</span>
                     <input
-                      type="number"
+                      type="text"
+                      inputMode="numeric"
                       placeholder="Amount"
-                      min="1"
-                      value={alloc.amount}
-                      onChange={(e) => handleUpdateAllocation(idx, "amount", e.target.value)}
+                      value={withDots(alloc.amount)}
+                      onChange={(e) => handleUpdateAllocation(idx, "amount", toDigits(e.target.value))}
                       className="w-full pl-8 pr-2.5 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white"
                     />
                   </div>

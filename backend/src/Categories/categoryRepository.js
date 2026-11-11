@@ -27,7 +27,7 @@ const findAllCategories = async (userId) => {
   return rows;
 };
 
-const findCategoryById = async (id, userId) => {
+const findCategoryById = async (id, userId, client = pool) => {
   const query = `
     SELECT 
       c.id,
@@ -49,7 +49,7 @@ const findCategoryById = async (id, userId) => {
     LEFT JOIN accounts a ON c.account_id = a.id
     WHERE c.id = $1 AND (c.user_id = $2 OR c.user_id IS NULL)
   `;
-  const { rows } = await pool.query(query, [id, userId || ""]);
+  const { rows } = await client.query(query, [id, userId || ""]);
   return rows[0] || null;
 };
 
@@ -97,6 +97,17 @@ const updateCategoryBalance = async (id, amountDelta, client = pool) => {
   return rows[0] || null;
 };
 
+const decreaseCategoryBalance = async (id, amount, client = pool) => {
+  const query = `
+    UPDATE categories
+    SET current_balance = current_balance - $1::numeric
+    WHERE id = $2 AND current_balance >= $1::numeric
+    RETURNING *
+  `;
+  const { rows } = await client.query(query, [amount, id]);
+  return rows[0] || null;
+};
+
 const deleteCategory = async (id, userId) => {
   const query = "DELETE FROM categories WHERE id = $1 AND (user_id = $2 OR user_id IS NULL) RETURNING *";
   const { rows } = await pool.query(query, [id, userId || ""]);
@@ -115,6 +126,7 @@ module.exports = {
   createCategory,
   updateCategory,
   updateCategoryBalance,
+  decreaseCategoryBalance,
   deleteCategory,
   countTransactionsByCategoryId,
 };
