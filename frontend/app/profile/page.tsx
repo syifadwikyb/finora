@@ -40,9 +40,9 @@ export default function ProfilePage() {
       if (savedProfile) {
         try {
           const parsed = JSON.parse(savedProfile);
-          if (parsed.username) setUsername(parsed.username);
+          setUsername(parsed.username || (user.email ? user.email.split("@")[0] : ""));
           if (parsed.phone) setPhone(parsed.phone);
-          if (parsed.photoURL && !user.photoURL) setPhotoURL(parsed.photoURL);
+          if (parsed.photoURL) setPhotoURL(parsed.photoURL);
         } catch (e) {
           console.error("Failed to parse saved profile", e);
         }
@@ -102,6 +102,7 @@ export default function ProfilePage() {
           displayName={displayName}
           username={username}
           photoURL={photoURL}
+          onPhotoChange={setPhotoURL}
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

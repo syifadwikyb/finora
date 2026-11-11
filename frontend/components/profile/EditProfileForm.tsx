@@ -17,6 +17,8 @@ interface EditProfileFormProps {
   setPhotoURL: (v: string) => void;
 }
 
+const isHttpUrl = (value: string) => /^https?:\/\//i.test(value);
+
 export default function EditProfileForm({
   user,
   displayName,
@@ -26,7 +28,6 @@ export default function EditProfileForm({
   phone,
   setPhone,
   photoURL,
-  setPhotoURL,
 }: EditProfileFormProps) {
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileSuccess, setProfileSuccess] = useState<string | null>(null);
@@ -41,7 +42,7 @@ export default function EditProfileForm({
     try {
       await updateUserProfile({
         displayName: displayName.trim(),
-        photoURL: photoURL.trim() || undefined,
+        photoURL: isHttpUrl(photoURL.trim()) ? photoURL.trim() : undefined,
       });
 
       const profileData = {
@@ -58,10 +59,6 @@ export default function EditProfileForm({
     } finally {
       setProfileSaving(false);
     }
-  };
-
-  const handleAvatarPreset = (url: string) => {
-    setPhotoURL(url);
   };
 
   return (
@@ -91,39 +88,6 @@ export default function EditProfileForm({
       )}
 
       <form onSubmit={handleSaveProfile} className="space-y-4 text-xs">
-        <div>
-          <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-            Profile Picture URL
-          </label>
-          <div className="relative">
-            <input
-              type="url"
-              placeholder="https://example.com/avatar.jpg"
-              value={photoURL}
-              onChange={(e) => setPhotoURL(e.target.value)}
-              className="w-full px-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-xs"
-            />
-          </div>
-          {/* Preset Avatars */}
-          <div className="flex items-center gap-2 mt-2">
-            <span className="text-[11px] text-slate-400">Pilih avatar cepat:</span>
-            {[
-              "https://api.dicebear.com/7.x/bottts/svg?seed=Finora1",
-              "https://api.dicebear.com/7.x/avataaars/svg?seed=Finora2",
-              "https://api.dicebear.com/7.x/lorelei/svg?seed=Finora3",
-            ].map((avatar, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => handleAvatarPreset(avatar)}
-                className="w-7 h-7 rounded-full border border-slate-300 dark:border-slate-600 overflow-hidden hover:scale-110 transition-transform"
-              >
-                <img src={avatar} alt="Preset" className="w-full h-full object-cover" />
-              </button>
-            ))}
-          </div>
-        </div>
-
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
