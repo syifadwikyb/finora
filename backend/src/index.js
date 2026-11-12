@@ -49,6 +49,7 @@ app.use("/auth", authRoutes);
 app.use("/accounts", accountRoutes);
 app.use("/allocations", allocationRoutes);
 app.use("/categories", categoryRoutes);
+app.use("/transfers", require("./Transfer/transferRoute"));
 app.use("/transactions", transactionRoutes);
 app.use("/dashboard", dashboardRoutes);
 
