@@ -1,10 +1,11 @@
 const dashboardRepository = require("./dashboardRepository");
 
 const getDashboardData = async (userId) => {
-  const [totals, rawExpenseOverview, recentTransactions, accountsSummary] = await Promise.all([
+  const [totals, rawExpenseOverview, recentTransactions, recentTransfers, accountsSummary] = await Promise.all([
     dashboardRepository.getTotalsAndCount(userId),
     dashboardRepository.getExpenseOverviewGrouped(userId),
     dashboardRepository.getRecentTransactions(userId, 5),
+    dashboardRepository.getRecentTransfers(userId, 5),
     dashboardRepository.getAccountsSummary(userId),
   ]);
 
@@ -29,6 +30,7 @@ const getDashboardData = async (userId) => {
     balance,
     totalTransactions,
     recentTransactions,
+    recentTransfers,
     expenseOverview,
     accountsSummary,
   };

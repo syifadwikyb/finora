@@ -1,4 +1,5 @@
 const pool = require("../config/db");
+const transferRepository = require("../Transfer/transferRepository");
 
 const getTotalsAndCount = async (userId) => {
   const query = `
@@ -84,9 +85,19 @@ const getAccountsSummary = async (userId) => {
   return rows;
 };
 
+const getRecentTransfers = async (userId, limit = 5) => {
+  try {
+    return await transferRepository.findAllTransfers(userId, limit);
+  } catch (error) {
+    if (error.code === "42P01") return [];
+    throw error;
+  }
+};
+
 module.exports = {
   getTotalsAndCount,
   getExpenseOverviewGrouped,
   getRecentTransactions,
+  getRecentTransfers,
   getAccountsSummary,
 };
