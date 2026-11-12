@@ -218,7 +218,7 @@ Distributed under the ISC License.
 
 ## 👤 Author
 
-Built by **[Your Name](https://github.com/syifadwikyb)**.
+Built by **[Syifa Dwiky Basamala](https://github.com/syifadwikyb)**.
 
 ---
 
