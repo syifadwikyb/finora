@@ -10,7 +10,7 @@ interface SummaryCardProps {
 }
 
 export default function SummaryCard({ title, amount, type = "balance", countValue }: SummaryCardProps) {
-  let bgColor = "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800";
+  let bgColor = "bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 shadow-sm hover:shadow-md";
   let iconBg = "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400";
   let amountColor = "text-slate-900 dark:text-white";
   let Icon = Wallet;

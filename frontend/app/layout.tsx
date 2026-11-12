@@ -33,7 +33,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f8fafc" },
+    { media: "(prefers-color-scheme: light)", color: "#f1f5f9" },
     { media: "(prefers-color-scheme: dark)", color: "#020617" },
   ],
 };
@@ -56,9 +56,8 @@ export default function RootLayout({
                   (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
                 document.documentElement.classList.toggle("dark", isDark);
-                setThemeColor(isDark);
 
-                const color = isDark ? '#020617' : '#f8fafc';
+                const color = isDark ? '#020617' : '#f1f5f9';
                 const applyThemeColor = () => {
                   document
                     .querySelectorAll('meta[name="theme-color"]')
@@ -71,7 +70,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${poppins.className} min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex`}>
+      <body className={`${poppins.className} min-h-screen bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex`}>
         <AuthProvider>
           <AppShell>
             <ClientLayout>

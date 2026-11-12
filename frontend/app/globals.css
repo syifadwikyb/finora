@@ -3,8 +3,8 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f1f5f9;
+  --foreground: #0f172a;
 }
 
 .dark {
@@ -26,14 +26,25 @@ body {
   overscroll-behavior-y: none;
 }
 
+/* Enhancements for light mode card depth and clear boundaries */
+:root {
+  --card-border: rgba(203, 213, 225, 0.8);
+  --card-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.06), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
+}
+
+.dark {
+  --card-border: rgba(30, 41, 59, 1);
+  --card-shadow: none;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
     transform: translateX(-4px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
   }
 }
-

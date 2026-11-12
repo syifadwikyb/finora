@@ -21,7 +21,8 @@ export default function LoginPage() {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       if (params.get("verified") === "true") {
-        setSuccessNotice("Email Anda berhasil diverifikasi! Silakan login untuk melanjutkan.");
+        // Diubah ke bahasa Inggris
+        setSuccessNotice("Your email has been successfully verified! Please sign in to continue.");
       }
     }
   }, []);
@@ -41,7 +42,8 @@ export default function LoginPage() {
 
       if (!userCredential.user.emailVerified) {
         await logout();
-        setError("Email belum diverifikasi. Silakan periksa inbox/spam Gmail Anda, lalu klik link verifikasi.");
+        // Diubah ke bahasa Inggris
+        setError("Email not verified. Please check your Gmail inbox or spam folder, and click the verification link.");
         setSubmitting(false);
         return;
       }

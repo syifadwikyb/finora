@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { registerWithEmail, signInWithGoogle, getAuthErrorMessage, auth, logout } from "@/lib/firebase";
-import { sendEmailVerification } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Wallet, Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle2, ShieldCheck } from "lucide-react";
@@ -21,7 +20,7 @@ export default function RegisterPage() {
   const handleEmailRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password !== confirmPassword) {
-      setError("Password tidak sama.");
+      setError("Passwords do not match.");
       return;
     }
     try {
@@ -29,30 +28,13 @@ export default function RegisterPage() {
       setMessage(null);
       setSubmitting(true);
 
-      // 1. Buat akun di Firebase
-      const userCredential = await registerWithEmail(email, password);
+      // 1. Buat akun dan kirim email verifikasi otomatis via Firebase
+      await registerWithEmail(email, password);
 
-      // 2. Kirim email kustom profesional via backend Resend
-      try {
-        const idToken = await userCredential.user.getIdToken();
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-        await fetch(`${apiUrl}/auth/send-verification`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email,
-            name: email.split("@")[0],
-            idToken,
-          }),
-        });
-      } catch (emailErr) {
-        console.warn("Resend email service notification:", emailErr);
-      }
-
-      // 3. Logout sesi pendaftaran agar user wajib verifikasi email terlebih dahulu
+      // 2. Logout agar user wajib verifikasi email terlebih dahulu
       await logout();
 
-      setMessage(`Tautan verifikasi resmi telah dikirim ke ${email}. Silakan periksa Kotak Masuk email Anda.`);
+      setMessage(`A verification link has been sent to ${email}. Please check your inbox.`);
 
       // Kosongkan form
       setEmail("");
