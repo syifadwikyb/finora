@@ -53,6 +53,22 @@ export interface Transaction {
   };
 }
 
+export interface Transfer {
+  id: number;
+  amount: number;
+  note?: string | null;
+  transfer_date: string;
+  created_at?: string;
+  from_category_id?: number | null;
+  to_category_id?: number | null;
+  from_account_id?: number | null;
+  to_account_id?: number | null;
+  from_category_name?: string | null;
+  to_category_name?: string | null;
+  from_account_name?: string | null;
+  to_account_name?: string | null;
+}
+
 export interface TransactionFilters {
   type?: string;
   category_id?: string | number;
@@ -71,6 +87,7 @@ export interface DashboardData {
   balance: number;
   totalTransactions: number;
   recentTransactions: Transaction[];
+  recentTransfers?: Transfer[];
   expenseOverview: {
     categoryName: string;
     totalAmount: number;
@@ -350,6 +367,75 @@ export const getDashboard = async () => {
     throw new Error(
       errorData.message || `Failed to fetch dashboard data (${res.status})`
     );
+  }
+  return res.json();
+};
+
+// ================= TRANSFERS API =================
+// ================= TRANSFERS API =================
+export const getTransfers = async () => {
+  const headers = await getAuthHeaders();
+  const url = await withUserId(`${API_URL}/transfers`);
+  const res = await fetch(url, { headers, cache: "no-store" });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || "Failed to fetch transfers");
+  }
+  return res.json();
+};
+
+export const createTransfer = async (data: {
+  from_category_id: number;
+  to_category_id: number;
+  amount: number;
+  note?: string;
+  transfer_date: string;
+}) => {
+  const headers = await getAuthHeaders();
+  const user_id = await getUserId();
+  const res = await fetch(`${API_URL}/transfers`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ ...data, user_id }),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || "Failed to move money");
+  }
+  return res.json();
+};
+
+export const updateTransfer = async (
+  id: number,
+  data: {
+    from_category_id: number;
+    to_category_id: number;
+    amount: number;
+    note?: string;
+    transfer_date: string;
+  }
+) => {
+  const headers = await getAuthHeaders();
+  const user_id = await getUserId();
+  const res = await fetch(`${API_URL}/transfers/${id}`, {
+    method: "PUT",
+    headers,
+    body: JSON.stringify({ ...data, user_id }),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || "Failed to update move");
+  }
+  return res.json();
+};
+
+export const deleteTransfer = async (id: number) => {
+  const headers = await getAuthHeaders();
+  const url = await withUserId(`${API_URL}/transfers/${id}`);
+  const res = await fetch(url, { method: "DELETE", headers });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || "Failed to delete move");
   }
   return res.json();
 };
