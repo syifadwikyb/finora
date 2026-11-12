@@ -17,7 +17,9 @@ import {
   TransactionFilters,
   createTransaction,
   createTransfer,
+  updateTransfer,
   deleteTransaction,
+  deleteTransfer,
   getAccounts,
   getCategories,
   getTransactions,
@@ -56,8 +58,14 @@ export default function TransactionsPage() {
   const [modalLoading, setModalLoading] = useState(false);
 
   // Transfer modal state
+  // Transfer modal state
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [transferLoading, setTransferLoading] = useState(false);
+  const [selectedTransfer, setSelectedTransfer] = useState<Transfer | null>(null);
+
+  // Delete move confirmation state
+  const [deleteTransferTarget, setDeleteTransferTarget] = useState<Transfer | null>(null);
+  const [deleteTransferLoading, setDeleteTransferLoading] = useState(false);
 
   // Delete confirmation state
   const [deleteTarget, setDeleteTarget] = useState<Transaction | null>(null);
@@ -218,18 +226,54 @@ export default function TransactionsPage() {
     }
   };
 
+  const handleOpenAddTransfer = () => {
+    setSelectedTransfer(null);
+    setIsTransferModalOpen(true);
+  };
+
+  const handleOpenEditTransfer = (tf: Transfer) => {
+    setSelectedTransfer(tf);
+    setIsTransferModalOpen(true);
+  };
+
+  const handleCloseTransferModal = () => {
+    setIsTransferModalOpen(false);
+    setSelectedTransfer(null);
+  };
+
   const handleSaveTransfer = async (formData: any) => {
     setTransferLoading(true);
     try {
-      await createTransfer(formData);
-      showToast("Money moved successfully.");
-      setIsTransferModalOpen(false);
+      if (selectedTransfer) {
+        await updateTransfer(selectedTransfer.id, formData);
+        showToast("Move updated.");
+      } else {
+        await createTransfer(formData);
+        showToast("Money moved successfully.");
+      }
+      handleCloseTransferModal();
       loadTransfers();
       loadSupportingData();
     } catch (err: any) {
       throw err;
     } finally {
       setTransferLoading(false);
+    }
+  };
+
+  const handleDeleteTransferConfirm = async () => {
+    if (!deleteTransferTarget) return;
+    setDeleteTransferLoading(true);
+    try {
+      await deleteTransfer(deleteTransferTarget.id);
+      showToast("Move deleted.");
+      setDeleteTransferTarget(null);
+      loadTransfers();
+      loadSupportingData();
+    } catch (err: any) {
+      showToast(err.message || "Failed to delete move");
+    } finally {
+      setDeleteTransferLoading(false);
     }
   };
 
@@ -270,7 +314,7 @@ export default function TransactionsPage() {
       key: "transfer",
       label: "Move Money",
       icon: ArrowLeftRight,
-      onClick: () => setIsTransferModalOpen(true),
+      onClick: handleOpenAddTransfer,
       color:
         "from-indigo-600 to-indigo-500 hover:from-indigo-700 hover:to-indigo-600 shadow-indigo-500/25",
     },
@@ -381,6 +425,8 @@ export default function TransactionsPage() {
               transfers={filteredTransfers}
               onEdit={handleOpenEdit}
               onDelete={(tx) => setDeleteTarget(tx)}
+              onEditTransfer={handleOpenEditTransfer}
+              onDeleteTransfer={(tf) => setDeleteTransferTarget(tf)}
             />
           </>
         )}
@@ -400,7 +446,8 @@ export default function TransactionsPage() {
       {/* Move Money Modal */}
       <TransferModal
         isOpen={isTransferModalOpen}
-        onClose={() => setIsTransferModalOpen(false)}
+        onClose={handleCloseTransferModal}
+        initialData={selectedTransfer}
         accounts={accounts}
         categories={categories}
         onSubmit={handleSaveTransfer}
@@ -421,6 +468,26 @@ export default function TransactionsPage() {
         confirmLabel="Delete Transaction"
         variant="danger"
         loading={deleteLoading}
+      />
+
+      {/* Delete Move Confirm Modal */}
+      <ConfirmModal
+        isOpen={Boolean(deleteTransferTarget)}
+        onClose={() => setDeleteTransferTarget(null)}
+        onConfirm={handleDeleteTransferConfirm}
+        title="Delete Move"
+        description={
+          <>
+            Delete the move from{" "}
+            <span className="font-semibold text-slate-900 dark:text-white">{deleteTransferTarget?.from_category_name}</span>{" "}
+            to{" "}
+            <span className="font-semibold text-slate-900 dark:text-white">{deleteTransferTarget?.to_category_name}</span>?
+            The money will be returned to the source category.
+          </>
+        }
+        confirmLabel="Delete Move"
+        variant="danger"
+        loading={deleteTransferLoading}
       />
     </div>
   );
