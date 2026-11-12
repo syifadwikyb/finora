@@ -12,8 +12,7 @@ import {
   getCategories,
   getAccounts,
   createTransaction,
-  createAccount,
-  createCategory,
+  createTransfer,
 } from "@/lib/api";
 import {
   AlertCircle,
@@ -22,7 +21,7 @@ import {
   Tags,
   PlusCircle,
   MinusCircle,
-  FolderPlus,
+  ArrowLeftRight,
   ArrowRight,
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
@@ -30,8 +29,7 @@ import SummaryCard from "@/components/dashboard/SummaryCard";
 import RecentTransactions from "@/components/dashboard/RecentTransactions";
 import ExpenseOverview from "@/components/dashboard/ExpenseOverview";
 import TransactionModal from "@/components/transactions/TransactionModal";
-import AccountModal from "@/components/accounts/AccountModal";
-import CategoryForm from "@/components/categories/CategoryForm";
+import TransferModal from "@/components/transactions/TransferModal";
 import { formatCurrency } from "@/lib/utils";
 
 // Total saldo = jumlah saldo kategori per akun (fallback ke saldo akun / balance)
@@ -57,11 +55,8 @@ export default function DashboardPage() {
   const [txDefaultType, setTxDefaultType] = useState<"income" | "expense">("income");
   const [txLoading, setTxLoading] = useState(false);
 
-  const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
-  const [accountLoading, setAccountLoading] = useState(false);
-
-  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
-  const [categoryLoading, setCategoryLoading] = useState(false);
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+  const [transferLoading, setTransferLoading] = useState(false);
 
   // Toast message
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -138,33 +133,42 @@ export default function DashboardPage() {
     }
   };
 
-  const handleSaveAccount = async (formData: { name: string; type: string; account_number?: string }) => {
-    setAccountLoading(true);
-    try {
-      await createAccount(formData);
-      showToast("Account added successfully.");
-      setIsAccountModalOpen(false);
-      fetchDashboardData();
-      loadSupportingData();
-    } catch (err: any) {
-      throw err;
-    } finally {
-      setAccountLoading(false);
-    }
-  };
+  const quickActions = [
+    {
+      key: "income",
+      label: "Income",
+      icon: PlusCircle,
+      onClick: () => handleOpenTransaction("income"),
+      color: "from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 shadow-emerald-500/25",
+    },
+    {
+      key: "expense",
+      label: "Expense",
+      icon: MinusCircle,
+      onClick: () => handleOpenTransaction("expense"),
+      color: "from-rose-600 to-rose-500 hover:from-rose-700 hover:to-rose-600 shadow-rose-500/25",
+    },
+    {
+      key: "transfer",
+      label: "Move Money",
+      icon: ArrowLeftRight,
+      onClick: () => setIsTransferModalOpen(true),
+      color: "from-indigo-600 to-indigo-500 hover:from-indigo-700 hover:to-indigo-600 shadow-indigo-500/25",
+    },
+  ];
 
-  const handleSaveCategory = async (formData: { name: string; account_id?: number | null }) => {
-    setCategoryLoading(true);
+  const handleSaveTransfer = async (formData: any) => {
+    setTransferLoading(true);
     try {
-      await createCategory(formData);
-      showToast("Category added successfully.");
-      setIsCategoryModalOpen(false);
+      await createTransfer(formData);
+      showToast("Money moved successfully.");
+      setIsTransferModalOpen(false);
       fetchDashboardData();
       loadSupportingData();
     } catch (err: any) {
       throw err;
     } finally {
-      setCategoryLoading(false);
+      setTransferLoading(false);
     }
   };
 
@@ -231,66 +235,22 @@ export default function DashboardPage() {
           <h2 className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 px-1">
             Quick Actions
           </h2>
-          <div className="grid grid-cols-4 gap-2 sm:gap-3">
-            {/* Income */}
-            <button
-              type="button"
-              onClick={() => handleOpenTransaction("income")}
-              className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-1.5 sm:gap-3 px-1 py-3 sm:p-3.5 rounded-2xl bg-gradient-to-br from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white shadow-md shadow-emerald-500/25 active:scale-95 transition-all group cursor-pointer"
-            >
-              <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                <PlusCircle className="w-5 h-5 text-white" />
-              </div>
-              <div className="text-center sm:text-left min-w-0">
-                <span className="hidden sm:block text-[11px] font-semibold opacity-90 leading-tight">Add</span>
-                <span className="block text-[11px] sm:text-sm font-bold truncate">Income</span>
-              </div>
-            </button>
-
-            {/* Expense */}
-            <button
-              type="button"
-              onClick={() => handleOpenTransaction("expense")}
-              className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-1.5 sm:gap-3 px-1 py-3 sm:p-3.5 rounded-2xl bg-gradient-to-br from-rose-600 to-rose-500 hover:from-rose-700 hover:to-rose-600 text-white shadow-md shadow-rose-500/25 active:scale-95 transition-all group cursor-pointer"
-            >
-              <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                <MinusCircle className="w-5 h-5 text-white" />
-              </div>
-              <div className="text-center sm:text-left min-w-0">
-                <span className="hidden sm:block text-[11px] font-semibold opacity-90 leading-tight">Add</span>
-                <span className="block text-[11px] sm:text-sm font-bold truncate">Expense</span>
-              </div>
-            </button>
-
-            {/* Account */}
-            <button
-              type="button"
-              onClick={() => setIsAccountModalOpen(true)}
-              className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-1.5 sm:gap-3 px-1 py-3 sm:p-3.5 rounded-2xl bg-gradient-to-br from-indigo-600 to-indigo-500 hover:from-indigo-700 hover:to-indigo-600 text-white shadow-md shadow-indigo-500/25 active:scale-95 transition-all group cursor-pointer"
-            >
-              <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                <Landmark className="w-5 h-5 text-white" />
-              </div>
-              <div className="text-center sm:text-left min-w-0">
-                <span className="hidden sm:block text-[11px] font-semibold opacity-90 leading-tight">Add</span>
-                <span className="block text-[11px] sm:text-sm font-bold truncate">Account</span>
-              </div>
-            </button>
-
-            {/* Category */}
-            <button
-              type="button"
-              onClick={() => setIsCategoryModalOpen(true)}
-              className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-1.5 sm:gap-3 px-1 py-3 sm:p-3.5 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-400 hover:from-amber-600 hover:to-amber-500 text-white shadow-md shadow-amber-500/25 active:scale-95 transition-all group cursor-pointer"
-            >
-              <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                <FolderPlus className="w-5 h-5 text-white" />
-              </div>
-              <div className="text-center sm:text-left min-w-0">
-                <span className="hidden sm:block text-[11px] font-semibold opacity-90 leading-tight">Add</span>
-                <span className="block text-[11px] sm:text-sm font-bold truncate">Category</span>
-              </div>
-            </button>
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
+            {quickActions.map(({ key, label, icon: Icon, onClick, color }) => (
+              <button
+                key={key}
+                type="button"
+                onClick={onClick}
+                className={`flex flex-col lg:flex-row items-center justify-center gap-2 lg:gap-3 px-2 py-3.5 lg:px-4 rounded-2xl bg-gradient-to-br text-white shadow-md active:scale-95 transition-all group cursor-pointer ${color}`}
+              >
+                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                  <Icon className="w-5 h-5 text-white" />
+                </div>
+                <span className="text-xs lg:text-sm font-bold leading-tight text-center whitespace-nowrap">
+                  {label}
+                </span>
+              </button>
+            ))}
           </div>
         </section>
 
@@ -387,7 +347,7 @@ export default function DashboardPage() {
             {/* Expense Overview (mobile & desktop) + Recent Transactions (desktop) */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-5">
               <div className="hidden md:block lg:col-span-2">
-                <RecentTransactions transactions={data.recentTransactions} />
+                <RecentTransactions transactions={data.recentTransactions} transfers={data.recentTransfers} />
               </div>
               <div className="lg:col-span-1">
                 <ExpenseOverview expenseOverview={data.expenseOverview} />
@@ -407,21 +367,14 @@ export default function DashboardPage() {
         loading={txLoading}
       />
 
-      {/* Account Modal for Adding Account */}
-      <AccountModal
-        isOpen={isAccountModalOpen}
-        onClose={() => setIsAccountModalOpen(false)}
-        onSubmit={handleSaveAccount}
-        loading={accountLoading}
-      />
-
-      {/* Category Modal for Adding Category */}
-      <CategoryForm
-        isOpen={isCategoryModalOpen}
-        onClose={() => setIsCategoryModalOpen(false)}
+      {/* Transfer Modal untuk Move Money */}
+      <TransferModal
+        isOpen={isTransferModalOpen}
+        onClose={() => setIsTransferModalOpen(false)}
         accounts={accounts}
-        onSubmit={handleSaveCategory}
-        loading={categoryLoading}
+        categories={categories}
+        onSubmit={handleSaveTransfer}
+        loading={transferLoading}
       />
     </div>
   );
