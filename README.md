@@ -6,7 +6,7 @@
 
 **Manage your money, simply.**
 
-A modern personal finance tracker to record income and expenses, organize categories, and keep your balances under control. Installable as an app on your phone.
+A modern personal finance tracker to record income and expenses, move money between categories, and keep your balances under control. Installable as an app on your phone.
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-finora--qy.vercel.app-059669?style=for-the-badge&logo=vercel&logoColor=white)](https://finora-qy.vercel.app)
 
@@ -26,7 +26,7 @@ A modern personal finance tracker to record income and expenses, organize catego
 
 ## 📖 About Finora
 
-**Finora** is a personal finance tracker that helps you understand where your money comes from and where it goes. Instead of juggling notes and spreadsheets, you can log every transaction, split your income across categories, and see each category's balance update automatically.
+**Finora** is a personal finance tracker that helps you understand where your money comes from and where it goes. Instead of juggling notes and spreadsheets, you can log every transaction, split your income across categories, move money between them (for example from your wallet to your bank), and see each category's balance update automatically.
 
 Finora is built as a responsive web app and can be installed on your phone like a native app, with its own icon and splash screen.
 
@@ -39,14 +39,17 @@ Finora is built as a responsive web app and can be installed on your phone like 
 - **Income & expense tracking**: record transactions with a title, amount, date, category, and description.
 - **Category balances**: every category keeps its own running balance that updates with each transaction.
 - **Income allocation**: split one income across multiple categories in a single entry.
-- **Balance protection**: expenses (and edits or deletions that would reverse used funds) are rejected when a category does not have enough balance.
-- **Safe edit & delete**: editing or deleting a transaction automatically reverses its old balance effect, inside a database transaction (all or nothing).
+- **Move Money**: transfer funds from one category to another, across accounts or within the same account (for example wallet to bank). The source balance decreases and the destination increases in a single database transaction.
+- **Move history**: moves appear in the transaction history alongside income and expenses, with their own **Move** badge and color. Filter by the **Move** type, category, date range, or search by note, category, or account name. Recent moves also show up on the dashboard.
+- **Edit & delete moves**: update or remove a move at any time. Finora reverses the old balance effect and applies the new one automatically.
+- **Balance protection**: expenses, moves, and any edit or deletion that would reverse funds that were already used are rejected when a category does not have enough balance.
+- **Safe edit & delete**: editing or deleting a transaction or a move automatically reverses its old balance effect, inside a database transaction (all or nothing).
 - **Secure authentication**: email and password sign-in with email verification, plus Google sign-in, powered by Firebase.
 - **PIN lock**: optionally protect the app with a PIN that is required before opening any page.
 - **Profile management**: edit your name, username, and phone number, and upload or remove your profile photo.
 - **Dark mode**: light, dark, or follow-system theme.
 - **Installable PWA**: add Finora to your home screen with a custom icon and an animated splash screen.
-- **Responsive design**: sidebar on desktop and bottom navigation on mobile.
+- **Responsive design**: sidebar on desktop and bottom navigation on mobile. Quick action buttons show icons only on small screens and icons with labels on desktop.
 
 <!--
 ## 📸 Screenshots
@@ -76,14 +79,17 @@ Add your screenshots to docs/screenshots/ and uncomment this section.
 finora/
 ├── frontend/                 # Next.js web app
 │   ├── app/                  # Routes, layouts, and pages
-│   ├── components/           # UI components (layout, auth, profile, ...)
-│   ├── lib/                  # Firebase setup and helpers
+│   ├── components/           # UI components (layout, auth, dashboard, transactions, ...)
+│   ├── lib/                  # API client, Firebase setup, and helpers
 │   ├── middleware.ts         # PIN protection
 │   └── public/               # Logo, icons, and manifest.json
 ├── backend/                  # Node.js API
-│   ├── config/               # Database connection
-│   ├── Transactions/         # Transaction service and repository
-│   └── Categories/           # Category service and repository
+│   └── src/
+│       ├── config/           # Database connection
+│       ├── Transactions/     # Transaction route, controller, service, and repository
+│       ├── Transfer/         # Move Money route, controller, service, and repository
+│       ├── Categories/       # Category service and repository
+│       └── Dashboard/        # Dashboard summary route, controller, service, and repository
 └── package.json              # Root scripts to run frontend and backend together
 ```
 
@@ -145,7 +151,7 @@ DATABASE_URL=postgresql://user:password@localhost:5432/finora
 
 ### 4. Set up the database
 
-Create a PostgreSQL database and run the schema or migration for your tables (users, categories, accounts, and transactions):
+Create a PostgreSQL database and run the schema or migration for your tables (users, categories, accounts, transactions, and transfers):
 
 ```bash
 createdb finora
