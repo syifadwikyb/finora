@@ -49,6 +49,7 @@ app.use("/allocations", allocationRoutes);
 app.use("/categories", categoryRoutes);
 app.use("/transfers", require("./Transfer/transferRoute"));
 app.use("/transactions", transactionRoutes);
+app.use("/chat", require("./Chat/chatRoute"));
 app.use("/dashboard", dashboardRoutes);
 
 // Always start the server on Render / Local

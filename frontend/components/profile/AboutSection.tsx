@@ -24,7 +24,7 @@ export default function AboutSection() {
         <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <span className="text-slate-500">Version</span>
           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-            <Sparkles className="w-3 h-3" /> v1.3.1 (Stable)
+            <Sparkles className="w-3 h-3" /> v1.4.1 (Stable)
           </span>
         </div>
 

@@ -439,3 +439,43 @@ export const deleteTransfer = async (id: number) => {
   }
   return res.json();
 };
+
+// ================= CHAT API =================
+export interface ChatAction {
+  name: string;
+  args: Record<string, any>;
+  summary: string;
+}
+
+export const sendChat = async (
+  message: string,
+  history: { role: "user" | "assistant"; text: string }[]
+) => {
+  const headers = await getAuthHeaders();
+  const user_id = await getUserId();
+  const res = await fetch(`${API_URL}/chat`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ message, history, user_id }),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || "Failed to send message");
+  }
+  return res.json();
+};
+
+export const executeChatActions = async (actions: ChatAction[]) => {
+  const headers = await getAuthHeaders();
+  const user_id = await getUserId();
+  const res = await fetch(`${API_URL}/chat/execute`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ actions, user_id }),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || "Failed to run actions");
+  }
+  return res.json();
+};
