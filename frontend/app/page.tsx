@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useRouter } from "next/navigation";
+import { useOnDataChanged } from "@/lib/dataEvents";
 
 import {
   DashboardData,
@@ -171,6 +172,11 @@ export default function DashboardPage() {
       setTransferLoading(false);
     }
   };
+
+  useOnDataChanged(() => {
+    fetchDashboardData();
+    loadSupportingData();
+  });
 
   if (authLoading) {
     return (
