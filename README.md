@@ -6,7 +6,7 @@
 
 **Manage your money, simply.**
 
-A modern personal finance tracker to record income and expenses, move money between categories, and keep your balances under control. Installable as an app on your phone.
+A modern personal finance tracker to record income and expenses, move money between categories, manage it all by chatting with an AI assistant, and keep your balances under control. Installable as an app on your phone.
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-finora--qy.vercel.app-059669?style=for-the-badge&logo=vercel&logoColor=white)](https://finora-qy.vercel.app)
 
@@ -17,8 +17,10 @@ A modern personal finance tracker to record income and expenses, move money betw
 ![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat-square&logo=nodedotjs&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=flat-square&logo=postgresql&logoColor=white)
 ![PWA](https://img.shields.io/badge/PWA-Installable-5A0FC8?style=flat-square&logo=pwa&logoColor=white)
+![Gemini](https://img.shields.io/badge/Gemini-AI%20Assistant-8E75B2?style=flat-square&logo=googlegemini&logoColor=white)
+![Version](https://img.shields.io/badge/version-1.4.0-059669?style=flat-square)
 
-[Live Demo](https://finora-qy.vercel.app) · [Features](#features) · [Tech Stack](#tech-stack) · [Getting Started](#getting-started) · [Install as App](#install-as-an-app)
+[Live Demo](https://finora-qy.vercel.app) · [Features](#features) · [AI Assistant](#ai-assistant) · [Tech Stack](#tech-stack) · [Getting Started](#getting-started) · [Install as App](#install-as-an-app) · [Changelog](#changelog)
 
 </div>
 
@@ -26,7 +28,7 @@ A modern personal finance tracker to record income and expenses, move money betw
 
 ## 📖 About Finora
 
-**Finora** is a personal finance tracker that helps you understand where your money comes from and where it goes. Instead of juggling notes and spreadsheets, you can log every transaction, split your income across categories, move money between them (for example from your wallet to your bank), and see each category's balance update automatically.
+**Finora** is a personal finance tracker that helps you understand where your money comes from and where it goes. Instead of juggling notes and spreadsheets, you can log every transaction, split your income across categories, move money between them (for example from your wallet to your bank), and see each category's balance update automatically. You can also just tell the built-in AI assistant what happened ("lunch 25k from Food") and confirm the result.
 
 Finora is built as a responsive web app and can be installed on your phone like a native app, with its own icon and splash screen.
 
@@ -44,6 +46,7 @@ Finora is built as a responsive web app and can be installed on your phone like 
 - **Edit & delete moves**: update or remove a move at any time. Finora reverses the old balance effect and applies the new one automatically.
 - **Balance protection**: expenses, moves, and any edit or deletion that would reverse funds that were already used are rejected when a category does not have enough balance.
 - **Safe edit & delete**: editing or deleting a transaction or a move automatically reverses its old balance effect, inside a database transaction (all or nothing).
+- **AI assistant**: chat in plain language to record income and expenses, move money, or create categories. Powered by Google Gemini, and every action is shown for your confirmation before anything is saved. See [AI Assistant](#ai-assistant).
 - **Secure authentication**: email and password sign-in with email verification, plus Google sign-in, powered by Firebase.
 - **PIN lock**: optionally protect the app with a PIN that is required before opening any page.
 - **Profile management**: edit your name, username, and phone number, and upload or remove your profile photo.
@@ -51,6 +54,34 @@ Finora is built as a responsive web app and can be installed on your phone like 
 - **Installable PWA**: add Finora to your home screen with a custom icon and an animated splash screen.
 - **Responsive design**: sidebar on desktop and bottom navigation on mobile. Quick action buttons show icons only on small screens and icons with labels on desktop.
 
+<a id="ai-assistant"></a>
+
+## 🤖 AI Assistant
+
+Tap the floating ✨ button to open **Finora Assistant** and describe what happened in plain language. The assistant turns your message into one or more actions, shows them to you, and only saves them after you press **Save**.
+
+| You type | Finora prepares |
+| --- | --- |
+| `lunch 25k from Food` | Expense Rp 25.000 · Lunch · Food |
+| `got salary 5m into Savings yesterday` | Income Rp 5.000.000 · Salary · Savings · yesterday's date |
+| `move 100k from Wallet to Bank` | Move Rp 100.000 · Wallet → Bank |
+| `create category Coffee` | Create category "Coffee" |
+
+**What it can do:** record income, record expenses, move money between categories, and create categories. Shorthand such as `25k` or `25rb` and relative dates such as "yesterday" are understood. If something is unclear (a missing amount, or a category that does not exist), the assistant asks instead of guessing.
+
+**How it works**
+
+1. `POST /chat` sends your message, the last few chat messages, and your category and account names to the Gemini API using function calling. Nothing is saved at this step.
+2. The proposed actions appear as a confirmation card.
+3. When you press **Save**, `POST /chat/execute` runs each action through the same services as the rest of the app, so the same validation applies (for example, balance protection).
+
+**Safety notes**
+
+- The Gemini API key lives only on the backend and is never sent to the browser.
+- Every action needs your confirmation. Each request is limited to 500 characters and 5 actions.
+- Only your message, recent chat history, and category and account names are sent to Gemini. Balances and transaction history are not.
+- If the primary model is slow or unavailable, the backend automatically retries with a fallback model.
+- The Gemini free tier has rate limits per model. You can check your usage in [Google AI Studio](https://aistudio.google.com/).
 <!--
 ## 📸 Screenshots
 
@@ -71,6 +102,7 @@ Add your screenshots to docs/screenshots/ and uncomment this section.
 | Authentication | [Firebase Authentication](https://firebase.google.com/docs/auth) |
 | Backend | [Node.js](https://nodejs.org/) |
 | Database | [PostgreSQL](https://www.postgresql.org/) |
+| AI assistant | [Google Gemini API](https://ai.google.dev/gemini-api/docs) via [`@google/genai`](https://www.npmjs.com/package/@google/genai) (function calling) |
 | Deployment | [Vercel](https://vercel.com/) |
 
 ## 📁 Project Structure
@@ -79,7 +111,7 @@ Add your screenshots to docs/screenshots/ and uncomment this section.
 finora/
 ├── frontend/                 # Next.js web app
 │   ├── app/                  # Routes, layouts, and pages
-│   ├── components/           # UI components (layout, auth, dashboard, transactions, ...)
+│   ├── components/           # UI components (layout, auth, dashboard, transactions, chat ...)
 │   ├── lib/                  # API client, Firebase setup, and helpers
 │   ├── middleware.ts         # PIN protection
 │   └── public/               # Logo, icons, and manifest.json
@@ -89,6 +121,7 @@ finora/
 │       ├── Transactions/     # Transaction route, controller, service, and repository
 │       ├── Transfer/         # Move Money route, controller, service, and repository
 │       ├── Categories/       # Category service and repository
+|       ├── Chat/             # AI assistant route, controller, service, and tool definitions
 │       └── Dashboard/        # Dashboard summary route, controller, service, and repository
 └── package.json              # Root scripts to run frontend and backend together
 ```
@@ -105,6 +138,7 @@ Make sure you have the following installed:
 - [npm](https://www.npmjs.com/)
 - [PostgreSQL](https://www.postgresql.org/) (local or hosted)
 - A [Firebase](https://console.firebase.google.com/) project with **Authentication** enabled (Email/Password and Google)
+- *(Optional)* A [Gemini API key](https://aistudio.google.com/) for the AI assistant
 
 ### 1. Clone the repository
 
@@ -145,9 +179,17 @@ NEXT_PUBLIC_API_URL=http://localhost:5000
 ```env
 PORT=5000
 DATABASE_URL=postgresql://user:password@localhost:5432/finora
+
+# AI assistant (optional)
+GEMINI_API_KEY=your_gemini_api_key
+GEMINI_MODEL=gemini-3.5-flash-lite
+GEMINI_FALLBACK_MODEL=gemini-3.5-flash
+APP_TIME_ZONE=Asia/Jakarta
 ```
 
 > ⚠️ Never commit `.env` files. Make sure they are listed in `.gitignore`.
+>
+> 🔑 Keep `GEMINI_API_KEY` on the backend only and never prefix it with `NEXT_PUBLIC_`. Without a key, the rest of the app works normally and only the assistant reports an error.
 
 ### 4. Set up the database
 
@@ -201,6 +243,19 @@ The frontend is deployed on [Vercel](https://vercel.com/):
 2. Set the **Root Directory** to `frontend`.
 3. Add the same environment variables from `frontend/.env.local`.
 4. Deploy.
+
+The backend needs its own environment variables on its host, including `DATABASE_URL` and, for the AI assistant, `GEMINI_API_KEY`.
+
+<a id="changelog"></a>
+
+## 📝 Changelog
+
+### 1.4.0
+
+- **New:** AI assistant to record income and expenses, move money, and create categories by chatting, with a confirmation step before saving.
+- **New:** Move Money, with history shown alongside transactions, plus edit and delete for moves.
+- **Improved:** quick action buttons show icons only on small screens and labels on desktop.
+- **Changed:** email verification now uses Firebase's built-in email only.
 
 ## 🤝 Contributing
 
