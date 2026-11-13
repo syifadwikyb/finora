@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useRouter } from "next/navigation";
+import { useOnDataChanged } from "@/lib/dataEvents";
 import Navbar from "@/components/layout/Navbar";
 import TransactionFilter from "@/components/transactions/TransactionFilter";
 import TransactionTable from "@/components/transactions/TransactionTable";
@@ -326,6 +327,12 @@ export default function TransactionsPage() {
   const retryMain = onlyTransfers ? loadTransfers : loadTransactions;
   // Di tampilan "All", kegagalan memuat Move tidak memblokir transaksi
   const moveWarning = !onlyTransfers && showTransfers && !transfersLoading && transfersError;
+
+  useOnDataChanged(() => {
+    loadTransactions();
+    loadTransfers();
+    loadSupportingData();
+  });
 
   if (authLoading) {
     return (

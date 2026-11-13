@@ -2,6 +2,7 @@
 
 import { useAuth } from "@/components/auth/AuthProvider";
 import LockScreen from "@/components/auth/LockScreen";
+import ChatWidget from "@/components/chat/ChatWidget";
 import { useEffect, useState } from "react";
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
@@ -15,7 +16,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         .split("; ")
         .find((row) => row.startsWith("finora_pin_enabled="))
         ?.split("=")[1];
-      
+
       const localMethod = user ? localStorage.getItem(`finora_lock_method_${user.uid}`) : null;
       const isEnabled = cookieEnabled === "true" || localMethod === "pin";
 
@@ -40,6 +41,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       {/* Tampilkan lock screen hanya jika PIN aktif DAN sedang terkunci */}
       {pinEnabled && isLocked && user && <LockScreen user={user} onUnlock={unlock} />}
       {children}
+      <ChatWidget />
     </>
   );
 }
