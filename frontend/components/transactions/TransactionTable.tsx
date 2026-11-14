@@ -15,10 +15,11 @@ import {
 
 interface TransactionTableProps {
   transactions: Transaction[];
-  // Riwayat Move Money; digabung dan diurutkan bersama transaksi
   transfers?: Transfer[];
   onEdit: (transaction: Transaction) => void;
   onDelete: (transaction: Transaction) => void;
+  onEditTransfer?: (transfer: Transfer) => void;
+  onDeleteTransfer?: (transfer: Transfer) => void;
 }
 
 type Entry =
@@ -35,10 +36,7 @@ const accountRoute = (tf: Transfer) => {
 };
 
 export default function TransactionTable({
-  transactions,
-  transfers = [],
-  onEdit,
-  onDelete,
+  transactions, transfers = [], onEdit, onDelete, onEditTransfer, onDeleteTransfer,
 }: TransactionTableProps) {
   // Gabungkan transaksi + transfer, urut tanggal terbaru dulu
   const entries = useMemo<Entry[]>(() => {
@@ -137,7 +135,24 @@ export default function TransactionTable({
                         {formatCurrency(Number(tf.amount))}
                       </span>
                     </td>
-                    <td className="py-3.5 px-4 text-center text-slate-300 dark:text-slate-600">—</td>
+                    <td className="py-3.5 px-4 text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <button
+                          onClick={() => onEditTransfer?.(tf)}
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors cursor-pointer"
+                          title="Edit move"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => onDeleteTransfer?.(tf)}
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                          title="Delete move"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 );
               }
@@ -177,8 +192,8 @@ export default function TransactionTable({
                   <td className="py-3.5 px-4">
                     <span
                       className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-semibold capitalize ${isIncome
-                          ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
-                          : "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300"
+                        ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
+                        : "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300"
                         }`}
                     >
                       {isIncome ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownLeft className="w-3 h-3" />}
@@ -223,28 +238,23 @@ export default function TransactionTable({
             const tf = entry.tf;
             const route = accountRoute(tf);
             return (
-              <div key={entry.key} className="p-4 space-y-2 bg-indigo-50/30 dark:bg-indigo-950/10">
+              <div key={entry.key} className="p-4 space-y-3 bg-indigo-50/30 dark:bg-indigo-950/10">
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-start gap-3 min-w-0">
-                    <div className="w-9 h-9 rounded-xl bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
-                      <ArrowLeftRight className="w-4 h-4" />
+                  <div className="min-w-0">
+                    <h4 className="font-semibold text-slate-900 dark:text-white text-sm">Move Money</h4>
+                    <div className="flex items-center gap-1.5 mt-1 text-xs font-medium text-indigo-700 dark:text-indigo-300 min-w-0">
+                      <span className="truncate">{tf.from_category_name || "Unknown"}</span>
+                      <ArrowRight className="w-3 h-3 shrink-0" />
+                      <span className="truncate">{tf.to_category_name || "Unknown"}</span>
                     </div>
-                    <div className="min-w-0">
-                      <h4 className="font-semibold text-slate-900 dark:text-white text-sm">Move Money</h4>
-                      <div className="flex items-center gap-1.5 mt-1 text-xs font-medium text-indigo-700 dark:text-indigo-300 min-w-0">
-                        <span className="truncate">{tf.from_category_name || "Unknown"}</span>
-                        <ArrowRight className="w-3 h-3 shrink-0" />
-                        <span className="truncate">{tf.to_category_name || "Unknown"}</span>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                        {route && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center gap-1 font-medium">
-                            <Landmark className="w-2.5 h-2.5" />
-                            {route}
-                          </span>
-                        )}
-                        <span className="text-xs text-slate-400">{formatDate(tf.transfer_date)}</span>
-                      </div>
+                    <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                      {route && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center gap-1 font-medium">
+                          <Landmark className="w-2.5 h-2.5" />
+                          {route}
+                        </span>
+                      )}
+                      <span className="text-xs text-slate-400">{formatDate(tf.transfer_date)}</span>
                     </div>
                   </div>
                   <span className="font-semibold text-sm text-indigo-600 dark:text-indigo-400 shrink-0">
@@ -252,7 +262,24 @@ export default function TransactionTable({
                   </span>
                 </div>
 
-                {tf.note && <p className="text-xs text-slate-500 pl-12">{tf.note}</p>}
+                {tf.note && <p className="text-xs text-slate-500">{tf.note}</p>}
+
+                <div className="flex items-center justify-end gap-3 pt-2 border-t border-indigo-100/70 dark:border-indigo-900/30">
+                  <button
+                    onClick={() => onEditTransfer?.(tf)}
+                    className="flex items-center gap-1 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 cursor-pointer"
+                  >
+                    <Edit2 className="w-3.5 h-3.5" />
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => onDeleteTransfer?.(tf)}
+                    className="flex items-center gap-1 text-xs font-medium text-rose-600 hover:text-rose-700 cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Delete
+                  </button>
+                </div>
               </div>
             );
           }
