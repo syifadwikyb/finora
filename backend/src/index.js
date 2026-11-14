@@ -8,7 +8,6 @@ const pool = require("./config/db");
 const categoryRoutes = require("./Categories/categoryRoute");
 const transactionRoutes = require("./Transactions/transactionRoute");
 const dashboardRoutes = require("./Dashboard/dashboardRoute");
-const authRoutes = require("./Auth/authRoute");
 const accountRoutes = require("./Accounts/accountRoute");
 const allocationRoutes = require("./Allocations/allocationRoute");
 
@@ -45,7 +44,6 @@ app.get("/health/database", async (req, res) => {
 });
 
 // Routes
-app.use("/auth", authRoutes);
 app.use("/accounts", accountRoutes);
 app.use("/allocations", allocationRoutes);
 app.use("/categories", categoryRoutes);
