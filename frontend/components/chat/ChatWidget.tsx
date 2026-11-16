@@ -24,6 +24,9 @@ const GREETING: ChatMessage = {
     text: "Hi! How can I help you today?"
 };
 
+const isDestructive = (actions?: ChatAction[]) =>
+    Boolean(actions?.some((a) => a.name.startsWith("delete_")));
+
 export default function ChatWidget() {
     const { user } = useAuth();
     const [open, setOpen] = useState(false);
@@ -159,23 +162,33 @@ export default function ChatWidget() {
                                             </ul>
 
                                             {m.status === "pending" && (
-                                                <div className="flex gap-2">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleConfirm(m)}
-                                                        disabled={executingId === m.id}
-                                                        className="flex-1 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold disabled:opacity-50 cursor-pointer"
-                                                    >
-                                                        {executingId === m.id ? "Saving..." : "Save"}
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => patch(m.id, { status: "cancelled" })}
-                                                        disabled={executingId === m.id}
-                                                        className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-[11px] font-semibold text-slate-600 dark:text-slate-300 cursor-pointer"
-                                                    >
-                                                        Cancel
-                                                    </button>
+                                                <div className="space-y-2">
+                                                    {isDestructive(m.actions) && (
+                                                        <p className="text-[10px] text-rose-600">
+                                                            This will permanently delete the item and adjust your balances.
+                                                        </p>
+                                                    )}
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleConfirm(m)}
+                                                            disabled={executingId === m.id}
+                                                            className={`flex-1 py-1.5 rounded-lg text-white text-[11px] font-semibold disabled:opacity-50 cursor-pointer ${isDestructive(m.actions) ? "bg-rose-600 hover:bg-rose-700" : "bg-emerald-600 hover:bg-emerald-700"
+                                                                }`}
+                                                        >
+                                                            {executingId === m.id
+                                                                ? isDestructive(m.actions) ? "Deleting..." : "Saving..."
+                                                                : isDestructive(m.actions) ? "Delete" : "Save"}
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => patch(m.id, { status: "cancelled" })}
+                                                            disabled={executingId === m.id}
+                                                            className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-[11px] font-semibold text-slate-600 dark:text-slate-300 cursor-pointer"
+                                                        >
+                                                            Cancel
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             )}
                                             {m.status === "cancelled" && <p className="text-[10px] text-slate-400">Cancelled</p>}
