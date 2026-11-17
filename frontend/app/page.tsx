@@ -33,13 +33,10 @@ import TransactionModal from "@/components/transactions/TransactionModal";
 import TransferModal from "@/components/transactions/TransferModal";
 import { formatCurrency } from "@/lib/utils";
 
-// Total saldo = jumlah saldo kategori per akun (fallback ke saldo akun / balance)
+// Total saldo bersih dari seluruh akun
 const getCashBalance = (d: DashboardData) =>
   d.accountsSummary && d.accountsSummary.length > 0
-    ? d.accountsSummary.reduce((acc, a) => {
-      const sumCat = a.categories?.reduce((s, c) => s + Number(c.current_balance || 0), 0) || 0;
-      return acc + (sumCat > 0 ? sumCat : Number(a.current_balance || 0));
-    }, 0)
+    ? d.accountsSummary.reduce((acc, a) => acc + Number(a.current_balance || 0), 0)
     : d.balance;
 
 export default function DashboardPage() {
@@ -369,6 +366,7 @@ export default function DashboardPage() {
         onClose={() => setIsTxModalOpen(false)}
         defaultType={txDefaultType}
         categories={categories}
+        accounts={accounts}
         onSubmit={handleSaveTransaction}
         loading={txLoading}
       />

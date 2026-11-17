@@ -8,7 +8,7 @@ const findAllAccounts = async (userId) => {
       a.name,
       a.type,
       a.account_number,
-      COALESCE((SELECT SUM(c.current_balance) FROM categories c WHERE c.account_id = a.id), 0)::numeric as current_balance,
+      (COALESCE(a.current_balance, 0) + COALESCE((SELECT SUM(c.current_balance) FROM categories c WHERE c.account_id = a.id), 0))::numeric as current_balance,
       a.created_at,
       a.updated_at,
       COALESCE(
@@ -37,7 +37,7 @@ const findAccountById = async (id, userId) => {
       a.name,
       a.type,
       a.account_number,
-      COALESCE((SELECT SUM(c.current_balance) FROM categories c WHERE c.account_id = a.id), 0)::numeric as current_balance,
+      (COALESCE(a.current_balance, 0) + COALESCE((SELECT SUM(c.current_balance) FROM categories c WHERE c.account_id = a.id), 0))::numeric as current_balance,
       a.created_at,
       a.updated_at,
       COALESCE(

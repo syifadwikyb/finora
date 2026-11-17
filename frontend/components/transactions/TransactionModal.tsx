@@ -10,6 +10,7 @@ interface TransactionModalProps {
   initialData?: Transaction | null;
   defaultType?: "income" | "expense";
   categories: Category[];
+  accounts?: any[];
   onSubmit: (formData: any) => Promise<void>;
   loading: boolean;
 }
@@ -20,6 +21,7 @@ export default function TransactionModal({
   initialData,
   defaultType = "expense",
   categories,
+  accounts = [],
   onSubmit,
   loading,
 }: TransactionModalProps) {
@@ -49,6 +51,7 @@ export default function TransactionModal({
           initialData={initialData}
           defaultType={defaultType}
           categories={categories}
+          accounts={accounts}
           onSubmit={onSubmit}
           onCancel={onClose}
           loading={loading}

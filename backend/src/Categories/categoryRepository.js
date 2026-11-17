@@ -14,7 +14,7 @@ const findAllCategories = async (userId) => {
           'name', a.name,
           'type', a.type,
           'account_number', a.account_number,
-          'current_balance', COALESCE((SELECT SUM(c2.current_balance) FROM categories c2 WHERE c2.account_id = a.id), 0)::numeric
+          'current_balance', (COALESCE(a.current_balance, 0) + COALESCE((SELECT SUM(c2.current_balance) FROM categories c2 WHERE c2.account_id = a.id), 0))::numeric
         )
         ELSE NULL
       END as account
@@ -41,7 +41,7 @@ const findCategoryById = async (id, userId, client = pool) => {
           'name', a.name,
           'type', a.type,
           'account_number', a.account_number,
-          'current_balance', COALESCE((SELECT SUM(c2.current_balance) FROM categories c2 WHERE c2.account_id = a.id), 0)::numeric
+          'current_balance', (COALESCE(a.current_balance, 0) + COALESCE((SELECT SUM(c2.current_balance) FROM categories c2 WHERE c2.account_id = a.id), 0))::numeric
         )
         ELSE NULL
       END as account

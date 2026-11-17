@@ -136,8 +136,7 @@ export default function AccountsPage() {
   };
 
   const getAccountEffectiveBalance = (acc: Account) => {
-    const sumCat = acc.categories?.reduce((s, c) => s + Number(c.current_balance || 0), 0) || 0;
-    return sumCat > 0 ? sumCat : Number(acc.current_balance || 0);
+    return Number(acc.current_balance || 0);
   };
 
   const totalBalance = accounts.reduce((acc, curr) => acc + getAccountEffectiveBalance(curr), 0);

@@ -8,11 +8,15 @@ import ProfileHeader from "@/components/profile/ProfileHeader";
 import EditProfileForm from "@/components/profile/EditProfileForm";
 import SecuritySection from "@/components/profile/SecuritySection";
 import ThemeSelector from "@/components/profile/ThemeSelector";
+import ModeSelector from "@/components/profile/ModeSelector";
+import LanguageSelector from "@/components/profile/LanguageSelector";
 import AboutSection from "@/components/profile/AboutSection";
 import LogoutSection from "@/components/profile/LogoutSection";
+import { useSettings } from "@/lib/settingsContext";
 
 export default function ProfilePage() {
   const { user, loading: authLoading, logout } = useAuth();
+  const { t } = useSettings();
   const router = useRouter();
 
   // Profile Form States
@@ -93,7 +97,7 @@ export default function ProfilePage() {
 
   return (
     <div className="flex-1 flex flex-col min-h-screen relative pb-24 md:pb-12">
-      <Navbar title="Profile & Settings" subtitle="Manage your account, security, and app preferences." />
+      <Navbar title={t("profile.title")} subtitle={t("profile.subtitle")} />
 
       <main className="flex-1 p-4 md:p-8 max-w-5xl w-full mx-auto space-y-8">
         {/* Profile Card Header */}
@@ -106,8 +110,10 @@ export default function ProfilePage() {
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Kolom Kiri & Tengah: Form Profil & Keamanan */}
+          {/* Kolom Kiri & Tengah: Form Profil & Mode & Keamanan */}
           <div className="lg:col-span-2 space-y-8">
+            <ModeSelector />
+
             <EditProfileForm
               user={user}
               displayName={displayName}
@@ -123,8 +129,9 @@ export default function ProfilePage() {
             <SecuritySection user={user} displayName={displayName} />
           </div>
 
-          {/* Kolom Kanan: Appearance, Lock Screen, About & Logout */}
+          {/* Kolom Kanan: Appearance, Language, About & Logout */}
           <div className="space-y-8">
+            <LanguageSelector />
             <ThemeSelector theme={theme} onThemeChange={handleThemeChange} />
             <AboutSection />
             <LogoutSection onLogout={logout} />

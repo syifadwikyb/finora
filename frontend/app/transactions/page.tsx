@@ -446,6 +446,7 @@ export default function TransactionsPage() {
         initialData={selectedTransaction}
         defaultType={defaultType}
         categories={categories}
+        accounts={accounts}
         onSubmit={handleSaveTransaction}
         loading={modalLoading}
       />

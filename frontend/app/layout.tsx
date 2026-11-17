@@ -6,6 +6,7 @@ import BottomNavbar from "@/components/layout/BottomNavbar";
 import BackNavigationHandler from "@/components/layout/BackNavigationHandler";
 import LayoutWrapper from "@/components/layout/LayoutWrapper";
 import { AuthProvider } from "@/components/auth/AuthProvider";
+import { SettingsProvider } from "@/lib/settingsContext";
 import ClientLayout from "@/components/layout/ClientLayout";
 import AppShell from "@/components/AppShell";
 
@@ -72,16 +73,18 @@ export default function RootLayout({
       </head>
       <body className={`${poppins.className} min-h-screen bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex`}>
         <AuthProvider>
-          <AppShell>
-            <ClientLayout>
-              <BackNavigationHandler />
-              <Sidebar />
-              <LayoutWrapper>
-                {children}
-              </LayoutWrapper>
-              <BottomNavbar />
-            </ClientLayout>
-          </AppShell>
+          <SettingsProvider>
+            <AppShell>
+              <ClientLayout>
+                <BackNavigationHandler />
+                <Sidebar />
+                <LayoutWrapper>
+                  {children}
+                </LayoutWrapper>
+                <BottomNavbar />
+              </ClientLayout>
+            </AppShell>
+          </SettingsProvider>
         </AuthProvider>
       </body>
     </html>

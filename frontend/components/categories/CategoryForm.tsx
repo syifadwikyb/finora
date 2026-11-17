@@ -99,22 +99,28 @@ export default function CategoryForm({
           </div>
 
           <div>
-            <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
-              <Landmark className="w-3.5 h-3.5 text-emerald-600" />
-              Linked Account (Automatic)
+            <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <Landmark className="w-3.5 h-3.5 text-emerald-600" />
+                Akun Terikat (Opsional / Mode Amplop)
+              </span>
+              <span className="text-[10px] text-slate-400 font-normal">Bisa dikosongkan untuk kategori universal</span>
             </label>
             <select
               value={accountId}
               onChange={(e) => setAccountId(e.target.value)}
               className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
             >
-              <option value="">-- No specific account (manual select) --</option>
+              <option value="">-- Kategori Universal (Bisa dipakai di semua akun) --</option>
               {accounts.map((acc) => (
                 <option key={acc.id} value={acc.id}>
                   {acc.name} ({acc.type}) • Rp {Number(acc.current_balance).toLocaleString("id-ID")}
                 </option>
               ))}
             </select>
+            <p className="text-[10px] text-slate-400 mt-1">
+              Jika dikosongkan, kategori ini bisa digunakan bebas dengan rekening/dompet mana saja (misal: SeaBank, BCA, BRI, Tunai).
+            </p>
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">

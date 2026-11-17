@@ -1,6 +1,7 @@
 const pool = require("../config/db");
 const transactionRepository = require("./transactionRepository");
 const categoryRepository = require("../Categories/categoryRepository");
+const accountRepository = require("../Accounts/accountRepository");
 
 const TRANSACTION_TYPE = Object.freeze({
   INCOME: "income",
@@ -79,27 +80,49 @@ const decreaseBalance = async (client, categoryId, userId, amount, context) => {
   );
 };
 
-const applyTransactionEffect = async (client, { type, amount, categoryId, allocations }, userId) => {
+const applyTransactionEffect = async (client, { type, amount, categoryId, accountId, allocations }, userId) => {
+  // Ambil detail kategori untuk mengetahui apakah kategori ini punya akun spesifik
+  const category = categoryId ? await categoryRepository.findCategoryById(categoryId, userId, client) : null;
+  const isCategoryAccountBound = category && category.account_id && (!accountId || Number(category.account_id) === Number(accountId));
+
   if (type === TRANSACTION_TYPE.INCOME) {
     const { validAllocations, remainingAmount } = summarizeAllocations(amount, allocations);
 
+    // Jika ada alokasi split
     for (const allocation of validAllocations) {
       await categoryRepository.updateCategoryBalance(allocation.category_id, allocation.amount, client);
     }
 
-    if (remainingAmount > 0 && categoryId) {
-      await categoryRepository.updateCategoryBalance(categoryId, remainingAmount, client);
+    if (remainingAmount > 0) {
+      if (isCategoryAccountBound && categoryId) {
+        // Mode Amplop: sisa masuk ke kategori amplop
+        await categoryRepository.updateCategoryBalance(categoryId, remainingAmount, client);
+      } else if (accountId) {
+        // Mode Fleksibel: langsung menambah saldo akun fisik
+        await accountRepository.updateAccountBalance(accountId, remainingAmount, client);
+      }
     }
     return;
   }
 
   if (type === TRANSACTION_TYPE.EXPENSE) {
-    await decreaseBalance(client, categoryId, userId, amount, "this expense");
+    if (isCategoryAccountBound && categoryId) {
+      // Mode Amplop: akun sama dengan kategori -> kurangi saldo kategori amplop
+      await decreaseBalance(client, categoryId, userId, amount, "this expense");
+    } else if (accountId) {
+      // Mode Fleksibel: akun berbeda dari kategori atau kategori universal -> potong saldo akun fisik yang dipilih!
+      await accountRepository.updateAccountBalance(accountId, -amount, client);
+    }
   }
 };
 
 const reverseTransactionEffect = async (client, transaction, userId, action) => {
   const amount = Number(transaction.amount);
+  const categoryId = transaction.category_id;
+  const accountId = transaction.account_id;
+
+  const category = categoryId ? await categoryRepository.findCategoryById(categoryId, userId, client) : null;
+  const isCategoryAccountBound = category && category.account_id && (!accountId || Number(category.account_id) === Number(accountId));
 
   if (transaction.type === TRANSACTION_TYPE.INCOME) {
     const { validAllocations, remainingAmount } = summarizeAllocations(amount, transaction.allocations);
@@ -109,14 +132,22 @@ const reverseTransactionEffect = async (client, transaction, userId, action) => 
       await decreaseBalance(client, allocation.category_id, userId, allocation.amount, context);
     }
 
-    if (remainingAmount > 0 && transaction.category_id) {
-      await decreaseBalance(client, transaction.category_id, userId, remainingAmount, context);
+    if (remainingAmount > 0) {
+      if (isCategoryAccountBound && categoryId) {
+        await decreaseBalance(client, categoryId, userId, remainingAmount, context);
+      } else if (accountId) {
+        await accountRepository.updateAccountBalance(accountId, -remainingAmount, client);
+      }
     }
     return;
   }
 
-  if (transaction.type === TRANSACTION_TYPE.EXPENSE && transaction.category_id) {
-    await categoryRepository.updateCategoryBalance(transaction.category_id, amount, client);
+  if (transaction.type === TRANSACTION_TYPE.EXPENSE) {
+    if (isCategoryAccountBound && categoryId) {
+      await categoryRepository.updateCategoryBalance(categoryId, amount, client);
+    } else if (accountId) {
+      await accountRepository.updateAccountBalance(accountId, amount, client);
+    }
   }
 };
 
@@ -190,7 +221,7 @@ const createTransaction = async (payload) => {
 
     await applyTransactionEffect(
       client,
-      { type: payload.type, amount, categoryId: primaryCategory.id, allocations },
+      { type: payload.type, amount, categoryId: primaryCategory.id, accountId: resolvedAccountId, allocations },
       payload.user_id
     );
 
@@ -273,7 +304,7 @@ const updateTransaction = async (transactionId, userId, payload) => {
     // 3. Terapkan efek saldo yang baru
     await applyTransactionEffect(
       client,
-      { type, amount, categoryId, allocations: newAllocations },
+      { type, amount, categoryId, accountId, allocations: newAllocations },
       userId
     );
 
