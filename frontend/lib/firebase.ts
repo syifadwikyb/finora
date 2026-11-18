@@ -80,6 +80,10 @@ export const onAuthStateChangedListener = (callback: (user: any) => void) => {
 export const getAuthErrorMessage = (error: any): string => {
   const code = error?.code || "";
   switch (code) {
+    case "auth/popup-closed-by-user":
+    case "auth/cancelled-popup-request":
+      // User membatalkan atau menutup popup pemilihan akun Google
+      return "";
     case "auth/requires-recent-login":
       return "Your session has expired. Please enter your current password to confirm.";
     case "auth/invalid-credential":

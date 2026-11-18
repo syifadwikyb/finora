@@ -46,18 +46,28 @@ const translations: Record<Language, Record<string, string>> = {
 
     // Dashboard
     "dashboard.title": "Dashboard",
-    "dashboard.subtitle": "Kelola keuangan Anda secara rapi dan terukur.",
+    "dashboard.subtitle": "Overview of your accounts, envelopes, and rapid actions.",
     "dashboard.totalBalance": "Total Saldo Bersih",
     "dashboard.totalIncome": "Total Pemasukan",
     "dashboard.totalExpense": "Total Pengeluaran",
     "dashboard.expenseCount": "Jumlah Transaksi",
     "dashboard.recentTransactions": "Transaksi Terkini",
+    "dashboard.recentSubtitle": "Aktivitas transaksi finansial terbaru",
     "dashboard.expenseOverview": "Ikhtisar Pengeluaran",
-    "dashboard.accountsSummary": "Ringkasan Akun",
+    "dashboard.expenseSubtitle": "Distribusi pengeluaran berdasarkan kategori",
+    "dashboard.accountsSummary": "Rekening & Pos Anggaran",
+    "dashboard.accountsSummaryFlexible": "Daftar Rekening & Saldo",
+    "dashboard.accountsSubtitle": "Rekening bank fisik dan pos alokasi kategori",
+    "dashboard.accountsSubtitleFlexible": "Saldo riil tersimpan di masing-masing rekening dan dompet",
     "dashboard.viewAll": "Lihat Semua",
     "dashboard.noTransactions": "Belum ada riwayat transaksi.",
     "dashboard.quickAddIncome": "Pemasukan",
     "dashboard.quickAddExpense": "Pengeluaran",
+    "dashboard.quickMoveMoney": "Pindah Dana",
+    "dashboard.quickActions": "Aksi Cepat",
+    "dashboard.noCategoriesLinked": "Kategori universal (tidak terikat)",
+    "dashboard.noExpenses": "Belum ada catatan pengeluaran.",
+    "dashboard.noExpensesDesc": "Pengeluaran Anda akan dikelompokkan secara otomatis di sini.",
     "dashboard.quickAddAccount": "Tambah Akun",
     "dashboard.quickAddCategory": "Tambah Kategori",
 
@@ -95,23 +105,61 @@ const translations: Record<Language, Record<string, string>> = {
     "categories.linkedAccount": "Terhubung ke Akun",
     "categories.unlinked": "Bebas / Tanpa Akun",
 
-    // Transactions Form
-    "tx.title": "Tambah Transaksi",
-    "tx.editTitle": "Ubah Transaksi",
-    "tx.formTitle": "Judul Transaksi *",
-    "tx.titlePlaceholder": "Contoh: Makan siang, Gaji, Belanja",
-    "tx.depositCategory": "Kategori Simpanan / Masuk *",
-    "tx.expenseCategory": "Kategori Pengeluaran *",
-    "tx.paymentAccount": "Akun Pembayaran / Sumber Dana *",
-    "tx.destinationAccount": "Akun Penerima Uang *",
-    "tx.allocateLabel": "Alokasikan ke kategori lain",
-    "tx.addSplit": "Tambah Alokasi",
-    "tx.distributeDesc": "Bagi uang masuk ke pos-pos kategori. Sisa dana akan tetap tersimpan di kategori utama.",
-    "tx.allocated": "Teralokasi",
-    "tx.remaining": "Sisa Dana",
-    "tx.saveTx": "Simpan Transaksi",
-    "tx.updateTx": "Perbarui Transaksi",
-    "tx.autoAccount": "Akun Terdeteksi Otomatis",
+    // Halaman Transaksi
+    "txp.title": "Transaksi",
+    "txp.subtitle": "Pantau pemasukan, pengeluaran, dan perpindahan dana Anda.",
+    "txp.historyTitle": "Riwayat Transaksi",
+    "txp.historySubtitle": "Filter atau catat pemasukan, pengeluaran, dan perpindahan dana",
+    "txp.addIncome": "Tambah Pemasukan",
+    "txp.addExpense": "Tambah Pengeluaran",
+    "txp.moveMoney": "Pindah Dana",
+    "txp.loadingHistory": "Memuat riwayat...",
+    "txp.failedLoad": "Gagal Memuat",
+    "txp.moveWarning": "Riwayat Pindah Dana tidak dapat dimuat.",
+    "txp.errLoadTx": "Gagal memuat transaksi.",
+    "txp.errLoadMove": "Gagal memuat riwayat pindah dana.",
+    "txp.errDeleteTx": "Gagal menghapus transaksi",
+    "txp.errDeleteMove": "Gagal menghapus perpindahan dana",
+    "txp.toastUpdated": "Transaksi diperbarui.",
+    "txp.toastRecorded": "Transaksi tercatat.",
+    "txp.toastTxDeleted": "Transaksi dihapus.",
+    "txp.toastMoved": "Dana berhasil dipindahkan.",
+    "txp.toastMoveUpdated": "Perpindahan dana diperbarui.",
+    "txp.toastMoveDeleted": "Perpindahan dana dihapus.",
+    "txp.deleteTxTitle": "Hapus Transaksi",
+    "txp.deleteTxDescPre": "Yakin ingin menghapus",
+    "txp.deleteTxDescPost": "? Saldo terkait akan menyesuaikan secara otomatis.",
+    "txp.deleteMoveTitle": "Hapus Perpindahan",
+    "txp.deleteMoveDescPre": "Hapus perpindahan dari",
+    "txp.deleteMoveDescTo": "ke",
+    "txp.deleteMoveDescPost": "? Dana akan dikembalikan ke kategori asal.",
+
+    // Filter transaksi
+    "flt.income": "Masuk",
+    "flt.expense": "Keluar",
+    "flt.move": "Pindah",
+    "flt.searchPlaceholder": "Cari transaksi...",
+    "flt.filter": "Filter:",
+    "flt.allCategories": "Semua Kategori",
+    "flt.from": "Dari",
+    "flt.to": "Sampai",
+    "flt.until": "s/d",
+    "flt.reset": "Reset",
+
+    // Tabel transaksi
+    "tbl.emptyTitle": "Transaksi tidak ditemukan.",
+    "tbl.emptyDesc": "Ubah filter atau catat transaksi baru.",
+    "tbl.colTitle": "Judul",
+    "tbl.colCategoryAccount": "Kategori & Akun",
+    "tbl.typeIncome": "Pemasukan",
+    "tbl.typeExpense": "Pengeluaran",
+    "tbl.general": "Umum",
+    "tbl.unknown": "Tidak diketahui",
+    "tbl.within": "Di dalam",
+    "tbl.editTx": "Ubah transaksi",
+    "tbl.deleteTx": "Hapus transaksi",
+    "tbl.editMove": "Ubah perpindahan",
+    "tbl.deleteMove": "Hapus perpindahan",
 
     // Profile
     "profile.title": "Profil & Pengaturan",
@@ -121,6 +169,20 @@ const translations: Record<Language, Record<string, string>> = {
     "profile.theme": "Tema Tampilan",
     "profile.about": "Tentang Finora",
     "profile.logout": "Keluar dari Akun",
+
+    // Chat AI
+    "chat.title": "Finora AI Assistant",
+    "chat.subtitle": "Catat pemasukan, pengeluaran, transfer, dan kategori",
+    "chat.greeting": "Halo! Ada yang bisa saya bantu catat hari ini?",
+    "chat.placeholder": "Ketik pesan (contoh: Makan siang 50rb pakai BRI)...",
+    "chat.typing": "Sedang mengetik...",
+    "chat.saved": "Tersimpan ✅",
+    "chat.deleteWarning": "Aksi ini akan menghapus data dan menyesuaikan saldo Anda.",
+    "chat.save": "Simpan",
+    "chat.delete": "Hapus",
+    "chat.saving": "Menyimpan...",
+    "chat.deleting": "Menghapus...",
+    "chat.cancelled": "Dibatalkan",
   },
   en: {
     // Nav Items
@@ -154,18 +216,28 @@ const translations: Record<Language, Record<string, string>> = {
 
     // Dashboard
     "dashboard.title": "Dashboard",
-    "dashboard.subtitle": "Manage your money, simply and track every penny.",
+    "dashboard.subtitle": "Overview of your accounts, budgets, and rapid actions.",
     "dashboard.totalBalance": "Total Net Balance",
     "dashboard.totalIncome": "Total Income",
     "dashboard.totalExpense": "Total Expense",
     "dashboard.expenseCount": "Total Transactions",
     "dashboard.recentTransactions": "Recent Transactions",
+    "dashboard.recentSubtitle": "Latest financial transactions & activities",
     "dashboard.expenseOverview": "Expense Overview",
-    "dashboard.accountsSummary": "Accounts Summary",
+    "dashboard.expenseSubtitle": "Expense distribution by category",
+    "dashboard.accountsSummary": "Accounts & Envelopes",
+    "dashboard.accountsSummaryFlexible": "Bank Accounts & Wallets",
+    "dashboard.accountsSubtitle": "Physical bank accounts and category allocations",
+    "dashboard.accountsSubtitleFlexible": "Real balance stored across each account and wallet",
     "dashboard.viewAll": "View All",
     "dashboard.noTransactions": "No transaction history yet.",
     "dashboard.quickAddIncome": "Income",
     "dashboard.quickAddExpense": "Expense",
+    "dashboard.quickMoveMoney": "Move Money",
+    "dashboard.quickActions": "Quick Actions",
+    "dashboard.noCategoriesLinked": "Universal categories (unlinked)",
+    "dashboard.noExpenses": "No expense records yet.",
+    "dashboard.noExpensesDesc": "Your expenses will be grouped automatically here.",
     "dashboard.quickAddAccount": "Add Account",
     "dashboard.quickAddCategory": "Add Category",
 
@@ -203,23 +275,61 @@ const translations: Record<Language, Record<string, string>> = {
     "categories.linkedAccount": "Linked to Account",
     "categories.unlinked": "Flexible / Unlinked",
 
-    // Transactions Form
-    "tx.title": "Add Transaction",
-    "tx.editTitle": "Edit Transaction",
-    "tx.formTitle": "Transaction Title *",
-    "tx.titlePlaceholder": "e.g. Lunch, Salary, Groceries",
-    "tx.depositCategory": "Deposit / Target Category *",
-    "tx.expenseCategory": "Expense Category *",
-    "tx.paymentAccount": "Payment Account / Source *",
-    "tx.destinationAccount": "Recipient Account *",
-    "tx.allocateLabel": "Allocate to other categories",
-    "tx.addSplit": "Add Split",
-    "tx.distributeDesc": "Distribute funds to spending categories. Remaining balance stays in the main category.",
-    "tx.allocated": "Allocated",
-    "tx.remaining": "Remaining",
-    "tx.saveTx": "Save Transaction",
-    "tx.updateTx": "Update Transaction",
-    "tx.autoAccount": "Account Automatically Detected",
+    // Transactions page
+    "txp.title": "Transactions",
+    "txp.subtitle": "Track your income, expenses, and money moves.",
+    "txp.historyTitle": "Transaction History",
+    "txp.historySubtitle": "Filter or record income, expenses, and money moves",
+    "txp.addIncome": "Add Income",
+    "txp.addExpense": "Add Expense",
+    "txp.moveMoney": "Move Money",
+    "txp.loadingHistory": "Loading history...",
+    "txp.failedLoad": "Failed to Load",
+    "txp.moveWarning": "Move Money history could not be loaded.",
+    "txp.errLoadTx": "Failed to load transactions.",
+    "txp.errLoadMove": "Failed to load move history.",
+    "txp.errDeleteTx": "Failed to delete transaction",
+    "txp.errDeleteMove": "Failed to delete move",
+    "txp.toastUpdated": "Transaction updated.",
+    "txp.toastRecorded": "Transaction recorded.",
+    "txp.toastTxDeleted": "Transaction deleted.",
+    "txp.toastMoved": "Money moved successfully.",
+    "txp.toastMoveUpdated": "Move updated.",
+    "txp.toastMoveDeleted": "Move deleted.",
+    "txp.deleteTxTitle": "Delete Transaction",
+    "txp.deleteTxDescPre": "Are you sure you want to delete",
+    "txp.deleteTxDescPost": "? The related account balance will automatically adjust.",
+    "txp.deleteMoveTitle": "Delete Move",
+    "txp.deleteMoveDescPre": "Delete the move from",
+    "txp.deleteMoveDescTo": "to",
+    "txp.deleteMoveDescPost": "? The money will be returned to the source category.",
+
+    // Transaction filter
+    "flt.income": "Income",
+    "flt.expense": "Expense",
+    "flt.move": "Move",
+    "flt.searchPlaceholder": "Search transactions...",
+    "flt.filter": "Filter:",
+    "flt.allCategories": "All Categories",
+    "flt.from": "From",
+    "flt.to": "To",
+    "flt.until": "to",
+    "flt.reset": "Reset",
+
+    // Transaction table
+    "tbl.emptyTitle": "No transactions found.",
+    "tbl.emptyDesc": "Adjust filters or record a new transaction.",
+    "tbl.colTitle": "Title",
+    "tbl.colCategoryAccount": "Category & Account",
+    "tbl.typeIncome": "Income",
+    "tbl.typeExpense": "Expense",
+    "tbl.general": "General",
+    "tbl.unknown": "Unknown",
+    "tbl.within": "Within",
+    "tbl.editTx": "Edit transaction",
+    "tbl.deleteTx": "Delete transaction",
+    "tbl.editMove": "Edit move",
+    "tbl.deleteMove": "Delete move",
 
     // Profile
     "profile.title": "Profile & Settings",
@@ -229,6 +339,20 @@ const translations: Record<Language, Record<string, string>> = {
     "profile.theme": "Theme & Appearance",
     "profile.about": "About Finora",
     "profile.logout": "Log Out",
+
+    // Chat AI
+    "chat.title": "Finora AI Assistant",
+    "chat.subtitle": "Record income, expenses, moves, and categories",
+    "chat.greeting": "Hi! How can I help you today?",
+    "chat.placeholder": "Type a message (e.g. Lunch 50k with BRI)...",
+    "chat.typing": "Typing...",
+    "chat.saved": "Saved ✅",
+    "chat.deleteWarning": "This will permanently delete the item and adjust your balances.",
+    "chat.save": "Save",
+    "chat.delete": "Delete",
+    "chat.saving": "Saving...",
+    "chat.deleting": "Deleting...",
+    "chat.cancelled": "Cancelled",
   },
 };
 
@@ -258,14 +382,14 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setLanguageState(lang);
     try {
       localStorage.setItem("finora_language", lang);
-    } catch (e) {}
+    } catch (e) { }
   };
 
   const setAppMode = (mode: AppMode) => {
     setAppModeState(mode);
     try {
       localStorage.setItem("finora_app_mode", mode);
-    } catch (e) {}
+    } catch (e) { }
   };
 
   const t = (key: string): string => {
@@ -285,9 +409,9 @@ export function useSettings() {
     // Fallback aman jika komponen di-render sebelum SettingsProvider siap
     return {
       language: "id" as Language,
-      setLanguage: () => {},
+      setLanguage: () => { },
       appMode: "envelope" as AppMode,
-      setAppMode: () => {},
+      setAppMode: () => { },
       t: (key: string) => translations["id"]?.[key] || key,
     };
   }

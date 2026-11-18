@@ -62,7 +62,8 @@ export default function LoginPage() {
       await signInWithGoogle();
       router.replace("/");
     } catch (err: any) {
-      setError(getAuthErrorMessage(err));
+      const msg = getAuthErrorMessage(err);
+      if (msg) setError(msg);
       setSubmitting(false);
     }
   };

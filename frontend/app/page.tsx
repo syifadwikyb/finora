@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useRouter } from "next/navigation";
 import { useOnDataChanged } from "@/lib/dataEvents";
+import { useSettings } from "@/lib/settingsContext";
 
 import {
   DashboardData,
@@ -40,6 +41,7 @@ const getCashBalance = (d: DashboardData) =>
     : d.balance;
 
 export default function DashboardPage() {
+  const { t, appMode, language } = useSettings();
   const [data, setData] = useState<DashboardData | null>(null);
   const [dashboardLoading, setDashboardLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -134,21 +136,21 @@ export default function DashboardPage() {
   const quickActions = [
     {
       key: "income",
-      label: "Income",
+      label: t("dashboard.quickAddIncome"),
       icon: PlusCircle,
       onClick: () => handleOpenTransaction("income"),
       color: "from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 shadow-emerald-500/25",
     },
     {
       key: "expense",
-      label: "Expense",
+      label: t("dashboard.quickAddExpense"),
       icon: MinusCircle,
       onClick: () => handleOpenTransaction("expense"),
       color: "from-rose-600 to-rose-500 hover:from-rose-700 hover:to-rose-600 shadow-rose-500/25",
     },
     {
       key: "transfer",
-      label: "Move Money",
+      label: t("dashboard.quickMoveMoney"),
       icon: ArrowLeftRight,
       onClick: () => setIsTransferModalOpen(true),
       color: "from-indigo-600 to-indigo-500 hover:from-indigo-700 hover:to-indigo-600 shadow-indigo-500/25",
@@ -190,7 +192,7 @@ export default function DashboardPage() {
 
   return (
     <div className="flex-1 flex flex-col min-h-screen pb-24 md:pb-8">
-      <Navbar title="Dashboard" subtitle="Overview of your accounts, envelopes, and rapid actions." />
+      <Navbar title={t("dashboard.title")} subtitle={t("dashboard.subtitle")} />
 
       {/* Floating Toast */}
       {toastMessage && (
@@ -226,17 +228,17 @@ export default function DashboardPage() {
         ) : data ? (
           <section aria-label="Summary" className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4">
             <div className="col-span-2 lg:col-span-1">
-              <SummaryCard title="Cash Balance" amount={getCashBalance(data)} type="balance" />
+              <SummaryCard title={t("dashboard.totalBalance")} amount={getCashBalance(data)} type="balance" />
             </div>
-            <SummaryCard title="Total Income" amount={data.totalIncome} type="income" />
-            <SummaryCard title="Total Expenses" amount={data.totalExpense} type="expense" />
+            <SummaryCard title={t("dashboard.totalIncome")} amount={data.totalIncome} type="income" />
+            <SummaryCard title={t("dashboard.totalExpense")} amount={data.totalExpense} type="expense" />
           </section>
         ) : null}
 
         {/* ================= QUICK ACTIONS (tepat di bawah Income & Expenses) ================= */}
         <section aria-label="Quick Actions" className="space-y-2">
           <h2 className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 px-1">
-            Quick Actions
+            {t("dashboard.quickActions")}
           </h2>
           <div className="grid grid-cols-3 gap-2 sm:gap-3">
             {quickActions.map(({ key, label, icon: Icon, onClick, color }) => (
@@ -274,26 +276,24 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between gap-3 mb-3">
                   <div className="min-w-0">
                     <h3 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base">
-                      Accounts &amp; Envelopes
+                      {appMode === "flexible" ? t("dashboard.accountsSummaryFlexible") : t("dashboard.accountsSummary")}
                     </h3>
                     <p className="text-[11px] sm:text-xs text-slate-500 truncate">
-                      Physical bank accounts and category allocations
+                      {appMode === "flexible" ? t("dashboard.accountsSubtitleFlexible") : t("dashboard.accountsSubtitle")}
                     </p>
                   </div>
                   <button
                     onClick={() => router.push("/accounts")}
                     className="shrink-0 text-xs font-semibold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 px-2 py-1.5 -mr-2 rounded-lg active:bg-emerald-50 dark:active:bg-emerald-950/40 cursor-pointer"
                   >
-                    View All
+                    {t("dashboard.viewAll")}
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {data.accountsSummary.map((acc) => {
-                    const categorySum =
-                      acc.categories?.reduce((sum, cat) => sum + Number(cat.current_balance || 0), 0) || 0;
-                    const displayBalance = categorySum > 0 ? categorySum : Number(acc.current_balance || 0);
+                    const displayBalance = Number(acc.current_balance || 0);
 
                     return (
                       <div
@@ -317,29 +317,39 @@ export default function DashboardPage() {
                           </span>
                         </div>
 
-                        <div className="pt-2 border-t border-slate-200/50 dark:border-slate-700/50 space-y-1.5">
-                          <div className="flex items-center justify-between text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-                            <span>Categories</span>
-                            <span>{acc.categories?.length || 0}</span>
-                          </div>
-                          {acc.categories && acc.categories.length > 0 ? (
-                            <div className="space-y-1.5">
-                              {acc.categories.map((cat) => (
-                                <div key={cat.id} className="flex items-center justify-between gap-2 text-xs">
-                                  <span className="text-slate-600 dark:text-slate-300 flex items-center gap-1.5 min-w-0">
-                                    <Tags className="w-3 h-3 text-emerald-500 shrink-0" />
-                                    <span className="truncate">{cat.name}</span>
-                                  </span>
-                                  <span className="font-semibold text-emerald-600 dark:text-emerald-400 text-[11px] shrink-0">
-                                    {formatCurrency(Number(cat.current_balance || 0))}
-                                  </span>
-                                </div>
-                              ))}
+                        {/* Di mode amplop, tampilkan kategori alokasi. Di mode bebas, beri info rekening siap pakai */}
+                        {appMode === "envelope" ? (
+                          <div className="pt-2 border-t border-slate-200/50 dark:border-slate-700/50 space-y-1.5">
+                            <div className="flex items-center justify-between text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                              <span>Categories</span>
+                              <span>{acc.categories?.length || 0}</span>
                             </div>
-                          ) : (
-                            <p className="text-[10px] text-slate-400 italic">No categories linked yet.</p>
-                          )}
-                        </div>
+                            {acc.categories && acc.categories.length > 0 ? (
+                              <div className="space-y-1.5">
+                                {acc.categories.map((cat) => (
+                                  <div key={cat.id} className="flex items-center justify-between gap-2 text-xs">
+                                    <span className="text-slate-600 dark:text-slate-300 flex items-center gap-1.5 min-w-0">
+                                      <Tags className="w-3 h-3 text-emerald-500 shrink-0" />
+                                      <span className="truncate">{cat.name}</span>
+                                    </span>
+                                    <span className="font-semibold text-emerald-600 dark:text-emerald-400 text-[11px] shrink-0">
+                                      {formatCurrency(Number(cat.current_balance || 0))}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-[10px] text-slate-400 italic">No categories linked yet.</p>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="pt-2 border-t border-slate-200/50 dark:border-slate-700/50 flex items-center justify-between text-[11px]">
+                            <span className="text-slate-400">Status</span>
+                            <span className="font-medium text-emerald-600 dark:text-emerald-400">
+                              {language === "id" ? "Bisa Dipakai Bebas" : "Ready to Use"}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     );
                   })}

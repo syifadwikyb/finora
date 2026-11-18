@@ -1,5 +1,6 @@
 import { formatCurrency } from "@/lib/utils";
 import { PieChart } from "lucide-react";
+import { useSettings } from "@/lib/settingsContext";
 
 interface ExpenseOverviewProps {
   expenseOverview: {
@@ -10,11 +11,13 @@ interface ExpenseOverviewProps {
 }
 
 export default function ExpenseOverview({ expenseOverview }: ExpenseOverviewProps) {
+  const { t } = useSettings();
+
   return (
     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xs flex flex-col h-full">
       <div className="pb-4 border-b border-slate-100 dark:border-slate-800 mb-4">
-        <h3 className="font-bold text-slate-900 dark:text-white text-base">Expense Overview</h3>
-        <p className="text-xs text-slate-500 dark:text-slate-400">Expense distribution by category</p>
+        <h3 className="font-bold text-slate-900 dark:text-white text-base">{t("dashboard.expenseOverview")}</h3>
+        <p className="text-xs text-slate-500 dark:text-slate-400">{t("dashboard.expenseSubtitle")}</p>
       </div>
 
       {expenseOverview.length === 0 ? (
@@ -22,8 +25,8 @@ export default function ExpenseOverview({ expenseOverview }: ExpenseOverviewProp
           <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 mb-3">
             <PieChart className="w-6 h-6" />
           </div>
-          <p className="text-sm font-medium text-slate-600 dark:text-slate-300">No expense records yet.</p>
-          <p className="text-xs text-slate-400 mt-1">Expenses will be grouped here automatically.</p>
+          <p className="text-sm font-medium text-slate-600 dark:text-slate-300">{t("dashboard.noExpenses")}</p>
+          <p className="text-xs text-slate-400 mt-1">{t("dashboard.noExpensesDesc")}</p>
         </div>
       ) : (
         <div className="space-y-4 flex-1">

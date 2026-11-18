@@ -449,14 +449,15 @@ export interface ChatAction {
 
 export const sendChat = async (
   message: string,
-  history: { role: "user" | "assistant"; text: string }[]
+  history: { role: "user" | "assistant"; text: string }[],
+  language: string = "id"
 ) => {
   const headers = await getAuthHeaders();
   const user_id = await getUserId();
   const res = await fetch(`${API_URL}/chat`, {
     method: "POST",
     headers,
-    body: JSON.stringify({ message, history, user_id }),
+    body: JSON.stringify({ message, history, user_id, language }),
   });
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));

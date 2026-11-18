@@ -1,7 +1,8 @@
 "use client";
 
 import { Category } from "@/lib/api";
-import { Edit2, FolderOpen, Tags, Trash2, Landmark } from "lucide-react";
+import { Edit2, FolderOpen, Tags, Trash2, Landmark, Globe } from "lucide-react";
+import { useSettings } from "@/lib/settingsContext";
 
 interface CategoryListProps {
   categories: Category[];
@@ -10,14 +11,22 @@ interface CategoryListProps {
 }
 
 export default function CategoryList({ categories, onEdit, onDelete }: CategoryListProps) {
+  const { t, appMode, language } = useSettings();
+
   if (categories.length === 0) {
     return (
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-8 text-center shadow-xs flex flex-col items-center justify-center">
         <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 mb-3">
           <FolderOpen className="w-6 h-6" />
         </div>
-        <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">No categories found.</p>
-        <p className="text-xs text-slate-400 mt-1">Create categories and link them to accounts.</p>
+        <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">
+          {language === "id" ? "Belum ada kategori." : "No categories found."}
+        </p>
+        <p className="text-xs text-slate-400 mt-1">
+          {appMode === "flexible"
+            ? (language === "id" ? "Buat kategori universal yang dapat digunakan di semua akun pembayaran." : "Create universal categories to use across any payment account.")
+            : (language === "id" ? "Buat kategori dan hubungkan ke akun untuk sistem amplop." : "Create categories and link them to accounts for envelope budgeting.")}
+        </p>
       </div>
     );
   }
@@ -41,7 +50,10 @@ export default function CategoryList({ categories, onEdit, onDelete }: CategoryL
                   {cat.account.name}
                 </span>
               ) : (
-                <span className="text-[10px] text-slate-400">Unlinked</span>
+                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded font-medium flex items-center gap-1 mt-0.5">
+                  <Globe className="w-2.5 h-2.5" />
+                  {language === "id" ? "Universal (Semua Akun)" : "Universal (All Accounts)"}
+                </span>
               )}
             </div>
           </div>

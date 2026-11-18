@@ -10,7 +10,8 @@ const chat = async (req, res) => {
         const userId = req.body.user_id;
         if (!userId) return res.status(400).json({ success: false, message: "User ID is required" });
 
-        const data = await chatService.proposeActions(userId, req.body.message, req.body.history);
+        const language = req.body.language || "id";
+        const data = await chatService.proposeActions(userId, req.body.message, req.body.history, language);
         res.status(200).json({ success: true, data });
     } catch (error) {
         sendError(res, error, "Failed to process chat");
