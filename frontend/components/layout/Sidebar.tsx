@@ -1,18 +1,20 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, ReceiptText, Tags, User, Wallet, Landmark } from "lucide-react";
-
-const navItems = [
-  { label: "Dashboard", href: "/", icon: LayoutDashboard },
-  { label: "Accounts", href: "/accounts", icon: Landmark },
-  { label: "Categories", href: "/categories", icon: Tags },
-  { label: "Transactions", href: "/transactions", icon: ReceiptText },
-  { label: "Profile", href: "/profile", icon: User },
-];
+import { LayoutDashboard, ReceiptText, Tags, User, Landmark } from "lucide-react";
+import { useSettings } from "@/lib/settingsContext";
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { t, appMode } = useSettings();
+
+  const navItems = [
+    { label: t("nav.dashboard"), href: "/", icon: LayoutDashboard },
+    { label: t("nav.accounts"), href: "/accounts", icon: Landmark },
+    { label: t("nav.categories"), href: "/categories", icon: Tags },
+    { label: t("nav.transactions"), href: "/transactions", icon: ReceiptText },
+    { label: t("nav.profile"), href: "/profile", icon: User },
+  ];
 
   if (pathname === '/login' || pathname === '/register' || pathname === '/enter-pin') return null;
 
@@ -28,7 +30,9 @@ export default function Sidebar() {
         </div>
         <div>
           <h1 className="font-bold text-lg tracking-tight text-slate-900 dark:text-white">Finora</h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400">Envelope Budgeting</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            {appMode === "envelope" ? "Envelope Budgeting" : "Multi-Account Tracker"}
+          </p>
         </div>
       </div>
 

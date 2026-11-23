@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Category, Transaction } from "@/lib/api";
-import { Landmark, Plus, Trash2, PieChart } from "lucide-react";
+import { Account, Category, Transaction } from "@/lib/api";
+import { Landmark, Plus, Trash2, PieChart, CreditCard } from "lucide-react";
+import { useSettings } from "@/lib/settingsContext";
 
 const toDigits = (text: string) => text.replace(/\D/g, "").replace(/^0+(?=\d)/, "");
 const withDots = (digits: string) => digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
@@ -11,6 +12,7 @@ interface TransactionFormProps {
   initialData?: Transaction | null;
   defaultType?: "income" | "expense";
   categories: Category[];
+  accounts?: Account[];
   onSubmit: (formData: {
     title: string;
     amount: number;
@@ -29,16 +31,19 @@ export default function TransactionForm({
   initialData,
   defaultType = "expense",
   categories,
+  accounts = [],
   onSubmit,
   onCancel,
   loading,
 }: TransactionFormProps) {
+  const { t, appMode } = useSettings();
   const today = new Date().toISOString().split("T")[0];
 
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
   const [type, setType] = useState<"income" | "expense">("expense");
   const [categoryId, setCategoryId] = useState("");
+  const [accountId, setAccountId] = useState("");
   const [description, setDescription] = useState("");
   const [transactionDate, setTransactionDate] = useState(today);
   const [errorMsg, setErrorMsg] = useState("");
@@ -52,6 +57,7 @@ export default function TransactionForm({
       setAmount(initialData.amount !== undefined && initialData.amount !== null ? String(Math.round(Number(initialData.amount))) : "");
       setType(initialData.type || "expense");
       setCategoryId(initialData.category_id ? String(initialData.category_id) : (categories.length > 0 ? String(categories[0].id) : ""));
+      setAccountId(initialData.account_id ? String(initialData.account_id) : (accounts.length > 0 ? String(accounts[0].id) : ""));
       setDescription(initialData.description || "");
       setTransactionDate(initialData.transaction_date ? initialData.transaction_date.split("T")[0] : today);
 
@@ -70,14 +76,19 @@ export default function TransactionForm({
       setAmount("");
       setType(defaultType);
       setCategoryId(categories.length > 0 ? String(categories[0].id) : "");
+      setAccountId(accounts.length > 0 ? String(accounts[0].id) : "");
       setDescription("");
       setTransactionDate(today);
       setAllocations([]);
     }
-  }, [initialData, defaultType, categories, today]);
+  }, [initialData, defaultType, categories, accounts, today]);
 
   const selectedCategory = categories.find((cat) => String(cat.id) === String(categoryId));
   const linkedAccount = selectedCategory?.account;
+
+  // In envelope mode, the account is derived from the category
+  // In flexible mode, the user selects the account directly
+  const selectedFlexibleAccount = accounts.find((acc) => String(acc.id) === String(accountId));
 
   const targetCategories = categories.filter((cat) => String(cat.id) !== String(categoryId));
 
@@ -129,7 +140,17 @@ export default function TransactionForm({
       return;
     }
 
-    if (type === "income" && allocations.length > 0) {
+    // Resolusi akun:
+    // Pada Mode Fleksibel: pakai accountId yang dipilih user (atau fallback ke linkedAccount)
+    // Pada Mode Amplop: pakai linkedAccount dari kategori
+    let finalAccountId: number | null = null;
+    if (appMode === "flexible") {
+      finalAccountId = accountId ? Number(accountId) : (linkedAccount ? linkedAccount.id : null);
+    } else {
+      finalAccountId = linkedAccount ? linkedAccount.id : (accountId ? Number(accountId) : null);
+    }
+
+    if (appMode === "envelope" && type === "income" && allocations.length > 0) {
       if (allocatedSum > numAmount) {
         setErrorMsg(`Total allocated (Rp ${allocatedSum.toLocaleString("id-ID")}) exceeds income amount (Rp ${numAmount.toLocaleString("id-ID")})`);
         return;
@@ -137,22 +158,24 @@ export default function TransactionForm({
     }
 
     try {
-      const formattedAllocations = allocations
-        .filter((a) => a.category_id && Number(a.amount) > 0)
-        .map((a) => ({
-          category_id: Number(a.category_id),
-          amount: Number(a.amount),
-        }));
+      const formattedAllocations = appMode === "envelope" && type === "income"
+        ? allocations
+            .filter((a) => a.category_id && Number(a.amount) > 0)
+            .map((a) => ({
+              category_id: Number(a.category_id),
+              amount: Number(a.amount),
+            }))
+        : undefined;
 
       await onSubmit({
         title: title.trim(),
         amount: numAmount,
         type,
         category_id: Number(categoryId),
-        account_id: linkedAccount ? linkedAccount.id : null,
+        account_id: finalAccountId,
         description: description.trim() || undefined,
         transaction_date: transactionDate,
-        allocations: type === "income" ? formattedAllocations : undefined,
+        allocations: formattedAllocations,
       });
     } catch (err: any) {
       setErrorMsg(err.message || "Failed to save transaction");
@@ -167,36 +190,48 @@ export default function TransactionForm({
         </div>
       )}
 
+      {/* Mode Indicator Pill */}
+      <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-[11px]">
+        <span className="text-slate-500">{t("settings.modeTitle")}:</span>
+        <span className="font-semibold text-emerald-700 dark:text-emerald-400">
+          {appMode === "envelope" ? `✉️ ${t("settings.modeEnvelope")}` : `💳 ${t("settings.modeFlexible")}`}
+        </span>
+      </div>
+
       {/* Type switch: Expense first */}
       <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
         <button
           type="button"
           onClick={() => setType("expense")}
-          className={`py-2 rounded-lg font-semibold transition-all cursor-pointer ${type === "expense"
-            ? "bg-rose-600 text-white shadow-xs"
-            : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
-            }`}
+          className={`py-2 rounded-lg font-semibold transition-all cursor-pointer ${
+            type === "expense"
+              ? "bg-rose-600 text-white shadow-xs"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+          }`}
         >
-          Expense (Money Out)
+          {t("common.expense")}
         </button>
         <button
           type="button"
           onClick={() => setType("income")}
-          className={`py-2 rounded-lg font-semibold transition-all cursor-pointer ${type === "income"
-            ? "bg-emerald-700 text-white shadow-xs"
-            : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
-            }`}
+          className={`py-2 rounded-lg font-semibold transition-all cursor-pointer ${
+            type === "income"
+              ? "bg-emerald-700 text-white shadow-xs"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+          }`}
         >
-          Income (Money In)
+          {t("common.income")}
         </button>
       </div>
 
       {/* Title */}
       <div>
-        <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Title *</label>
+        <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+          {t("tx.formTitle")}
+        </label>
         <input
           type="text"
-          placeholder="e.g. Lunch, Groceries, Salary, Utilities"
+          placeholder={t("tx.titlePlaceholder")}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
@@ -204,10 +239,12 @@ export default function TransactionForm({
         />
       </div>
 
-      {/* Amount & Category */}
+      {/* Amount & Category / Account Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Amount (Rp) *</label>
+          <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            {t("common.amount")} (Rp) *
+          </label>
           <input
             type="text"
             inputMode="numeric"
@@ -221,60 +258,88 @@ export default function TransactionForm({
 
         <div>
           <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-            {type === "income" ? "Deposit Category" : "Expense Category"} *
+            {type === "income" ? t("tx.depositCategory") : t("tx.expenseCategory")}
           </label>
           <select
             value={categoryId}
-            onChange={(e) => {
-              setCategoryId(e.target.value);
-            }}
+            onChange={(e) => setCategoryId(e.target.value)}
             className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
             required
           >
-            <option value="" disabled>-- Select Category --</option>
+            <option value="" disabled>-- {t("categories.title")} --</option>
             {categories.map((cat) => (
               <option key={cat.id} value={cat.id}>
-                {cat.name} {cat.account ? `(${cat.account.name})` : ""}
+                {cat.name} {appMode === "envelope" && cat.account ? `(${cat.account.name})` : ""}
               </option>
             ))}
           </select>
         </div>
       </div>
 
-      {/* Auto-detected account preview */}
-      <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Landmark className="w-4 h-4 text-emerald-600 shrink-0" />
-          <div>
-            <span className="text-[10px] uppercase font-bold text-slate-400">Linked Account:</span>
-            <p className="font-semibold text-slate-900 dark:text-white text-xs">
-              {linkedAccount ? (
-                <>
-                  {linkedAccount.name}{" "}
-                  <span className="text-[10px] text-slate-400 font-normal">
-                    ({linkedAccount.type}) • Balance: Rp {Number(linkedAccount.current_balance).toLocaleString("id-ID")}
-                  </span>
-                </>
-              ) : (
-                <span className="text-slate-400 font-normal">
-                  Category not linked to a specific account
-                </span>
-              )}
-            </p>
-          </div>
+      {/* MODE FLEKSIBEL: User bebas memilih Akun Pembayaran (BCA, BRI, Mandiri, Cash) */}
+      {appMode === "flexible" ? (
+        <div>
+          <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            <span className="flex items-center gap-1.5">
+              <CreditCard className="w-3.5 h-3.5 text-emerald-600" />
+              {type === "income" ? t("tx.destinationAccount") : t("tx.paymentAccount")}
+            </span>
+          </label>
+          <select
+            value={accountId}
+            onChange={(e) => setAccountId(e.target.value)}
+            className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+            required
+          >
+            <option value="" disabled>-- {t("accounts.title")} --</option>
+            {accounts.map((acc) => (
+              <option key={acc.id} value={acc.id}>
+                {acc.name} ({acc.type}) - Saldo: Rp {Number(acc.current_balance || 0).toLocaleString("id-ID")}
+              </option>
+            ))}
+          </select>
+          <p className="text-[10px] text-slate-400 mt-1">
+            {type === "expense"
+              ? "Pilih rekening atau dompet tempat uang akan dipotong (misal: BRI, BCA, Mandiri, Tunai)."
+              : "Pilih rekening tujuan dana uang masuk."}
+          </p>
         </div>
-        <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
-          Auto
-        </span>
-      </div>
+      ) : (
+        /* MODE ALOKASI (AMPLOP): Akun otomatis terdeteksi dari kategori */
+        <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Landmark className="w-4 h-4 text-emerald-600 shrink-0" />
+            <div>
+              <span className="text-[10px] uppercase font-bold text-slate-400">{t("tx.autoAccount")}:</span>
+              <p className="font-semibold text-slate-900 dark:text-white text-xs">
+                {linkedAccount ? (
+                  <>
+                    {linkedAccount.name}{" "}
+                    <span className="text-[10px] text-slate-400 font-normal">
+                      ({linkedAccount.type}) • Saldo: Rp {Number(linkedAccount.current_balance).toLocaleString("id-ID")}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-slate-400 font-normal">
+                    {t("categories.unlinked")}
+                  </span>
+                )}
+              </p>
+            </div>
+          </div>
+          <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
+            Auto
+          </span>
+        </div>
+      )}
 
-      {/* Allocation section for income */}
-      {type === "income" && (
+      {/* Allocation section for income (Khusus Mode Alokasi / Envelope) */}
+      {appMode === "envelope" && type === "income" && (
         <div className="p-3.5 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200/80 dark:border-emerald-800/50 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300 font-bold">
               <PieChart className="w-4 h-4" />
-              <span>Allocate to other categories</span>
+              <span>{t("tx.allocateLabel")}</span>
             </div>
             <button
               type="button"
@@ -283,12 +348,12 @@ export default function TransactionForm({
               className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-700 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-semibold transition-colors disabled:opacity-50 cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
-              Add Split
+              {t("tx.addSplit")}
             </button>
           </div>
 
           <p className="text-[11px] text-slate-600 dark:text-slate-400">
-            Distribute funds to spending categories. Remaining balance stays in {selectedCategory?.name || "the source category"}.
+            {t("tx.distributeDesc")}
           </p>
 
           {targetCategories.length === 0 && (
@@ -337,10 +402,10 @@ export default function TransactionForm({
 
               <div className="pt-2 border-t border-emerald-200/60 dark:border-emerald-800/60 flex items-center justify-between text-[11px]">
                 <span className="text-slate-500">
-                  Allocated: <strong className="text-slate-900 dark:text-white">Rp {allocatedSum.toLocaleString("id-ID")}</strong>
+                  {t("tx.allocated")}: <strong className="text-slate-900 dark:text-white">Rp {allocatedSum.toLocaleString("id-ID")}</strong>
                 </span>
                 <span className={remainingToAllocate < 0 ? "text-rose-600 font-bold" : "text-emerald-700 dark:text-emerald-300 font-semibold"}>
-                  Remaining: Rp {remainingToAllocate.toLocaleString("id-ID")}
+                  {t("tx.remaining")}: Rp {remainingToAllocate.toLocaleString("id-ID")}
                 </span>
               </div>
             </div>
@@ -350,7 +415,7 @@ export default function TransactionForm({
 
       {/* Date */}
       <div>
-        <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Date *</label>
+        <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">{t("common.date")} *</label>
         <input
           type="date"
           value={transactionDate}
@@ -362,7 +427,7 @@ export default function TransactionForm({
 
       {/* Description */}
       <div>
-        <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Notes (Optional)</label>
+        <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">{t("common.notes")}</label>
         <textarea
           rows={2}
           placeholder="Add short note..."
@@ -380,14 +445,14 @@ export default function TransactionForm({
           disabled={loading}
           className="px-4 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium cursor-pointer"
         >
-          Cancel
+          {t("common.cancel")}
         </button>
         <button
           type="submit"
           disabled={loading}
           className="px-5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-700 text-white font-semibold transition-colors disabled:opacity-50 cursor-pointer"
         >
-          {loading ? "Saving..." : initialData ? "Update Transaction" : "Save Transaction"}
+          {loading ? t("common.loading") : initialData ? t("tx.updateTx") : t("tx.saveTx")}
         </button>
       </div>
     </form>

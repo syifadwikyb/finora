@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useRouter } from "next/navigation";
 import { useOnDataChanged } from "@/lib/dataEvents";
+import { useSettings } from "@/lib/settingsContext";
 import Navbar from "@/components/layout/Navbar";
 import TransactionFilter from "@/components/transactions/TransactionFilter";
 import TransactionTable from "@/components/transactions/TransactionTable";
@@ -29,7 +30,11 @@ import {
 } from "@/lib/api";
 import { AlertCircle, ArrowLeftRight, MinusCircle, PlusCircle, RefreshCw } from "lucide-react";
 
+// Penanda: pesan error bawaan, diterjemahkan saat render
+const DEFAULT_ERROR = "__DEFAULT_ERROR__";
+
 export default function TransactionsPage() {
+  const { t } = useSettings();
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
 
@@ -58,7 +63,6 @@ export default function TransactionsPage() {
   const [defaultType, setDefaultType] = useState<"income" | "expense">("expense");
   const [modalLoading, setModalLoading] = useState(false);
 
-  // Transfer modal state
   // Transfer modal state
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [transferLoading, setTransferLoading] = useState(false);
@@ -121,7 +125,7 @@ export default function TransactionsPage() {
       setTransactions(res.data);
     } catch (err: any) {
       console.error("Error loading transactions:", err);
-      setError(err.message || "Failed to load transactions.");
+      setError(err.message || DEFAULT_ERROR);
     } finally {
       setLoading(false);
     }
@@ -135,7 +139,7 @@ export default function TransactionsPage() {
       setTransfers(res.data || []);
     } catch (err: any) {
       console.error("Error loading transfers:", err);
-      setTransfersError(err.message || "Failed to load move history.");
+      setTransfersError(err.message || DEFAULT_ERROR);
     } finally {
       setTransfersLoading(false);
     }
@@ -159,24 +163,24 @@ export default function TransactionsPage() {
     if (!showTransfers) return [];
     const q = (filters.search || "").trim().toLowerCase();
 
-    return transfers.filter((t) => {
-      const d = String(t.transfer_date).slice(0, 10);
+    return transfers.filter((tf) => {
+      const d = String(tf.transfer_date).slice(0, 10);
       if (filters.date && d !== filters.date) return false;
       if (filters.start_date && d < filters.start_date) return false;
       if (filters.end_date && d > filters.end_date) return false;
 
       if (filters.category_id) {
         const id = Number(filters.category_id);
-        if (t.from_category_id !== id && t.to_category_id !== id) return false;
+        if (tf.from_category_id !== id && tf.to_category_id !== id) return false;
       }
 
       if (q) {
         const haystack = [
-          t.note,
-          t.from_category_name,
-          t.to_category_name,
-          t.from_account_name,
-          t.to_account_name,
+          tf.note,
+          tf.from_category_name,
+          tf.to_category_name,
+          tf.from_account_name,
+          tf.to_account_name,
         ]
           .filter(Boolean)
           .join(" ")
@@ -212,10 +216,10 @@ export default function TransactionsPage() {
     try {
       if (selectedTransaction) {
         await updateTransaction(selectedTransaction.id, formData);
-        showToast("Transaction updated.");
+        showToast(t("txp.toastUpdated"));
       } else {
         await createTransaction(formData);
-        showToast("Transaction recorded.");
+        showToast(t("txp.toastRecorded"));
       }
       setIsModalOpen(false);
       loadTransactions();
@@ -247,10 +251,10 @@ export default function TransactionsPage() {
     try {
       if (selectedTransfer) {
         await updateTransfer(selectedTransfer.id, formData);
-        showToast("Move updated.");
+        showToast(t("txp.toastMoveUpdated"));
       } else {
         await createTransfer(formData);
-        showToast("Money moved successfully.");
+        showToast(t("txp.toastMoved"));
       }
       handleCloseTransferModal();
       loadTransfers();
@@ -267,12 +271,12 @@ export default function TransactionsPage() {
     setDeleteTransferLoading(true);
     try {
       await deleteTransfer(deleteTransferTarget.id);
-      showToast("Move deleted.");
+      showToast(t("txp.toastMoveDeleted"));
       setDeleteTransferTarget(null);
       loadTransfers();
       loadSupportingData();
     } catch (err: any) {
-      showToast(err.message || "Failed to delete move");
+      showToast(err.message || t("txp.errDeleteMove"));
     } finally {
       setDeleteTransferLoading(false);
     }
@@ -283,12 +287,12 @@ export default function TransactionsPage() {
     setDeleteLoading(true);
     try {
       await deleteTransaction(deleteTarget.id);
-      showToast("Transaction deleted.");
+      showToast(t("txp.toastTxDeleted"));
       setDeleteTarget(null);
       loadTransactions();
       loadSupportingData();
     } catch (err: any) {
-      showToast(err.message || "Failed to delete transaction");
+      showToast(err.message || t("txp.errDeleteTx"));
     } finally {
       setDeleteLoading(false);
     }
@@ -298,7 +302,7 @@ export default function TransactionsPage() {
   const actions = [
     {
       key: "income",
-      label: "Add Income",
+      label: t("txp.addIncome"),
       icon: PlusCircle,
       onClick: () => handleOpenAdd("income"),
       color:
@@ -306,14 +310,14 @@ export default function TransactionsPage() {
     },
     {
       key: "expense",
-      label: "Add Expense",
+      label: t("txp.addExpense"),
       icon: MinusCircle,
       onClick: () => handleOpenAdd("expense"),
       color: "from-rose-600 to-rose-500 hover:from-rose-700 hover:to-rose-600 shadow-rose-500/25",
     },
     {
       key: "transfer",
-      label: "Move Money",
+      label: t("txp.moveMoney"),
       icon: ArrowLeftRight,
       onClick: handleOpenAddTransfer,
       color:
@@ -328,6 +332,12 @@ export default function TransactionsPage() {
   // Di tampilan "All", kegagalan memuat Move tidak memblokir transaksi
   const moveWarning = !onlyTransfers && showTransfers && !transfersLoading && transfersError;
 
+  const displayError = (msg: string | null) => {
+    if (!msg) return "";
+    if (msg !== DEFAULT_ERROR) return msg;
+    return onlyTransfers ? t("txp.errLoadMove") : t("txp.errLoadTx");
+  };
+
   useOnDataChanged(() => {
     loadTransactions();
     loadTransfers();
@@ -338,7 +348,7 @@ export default function TransactionsPage() {
     return (
       <div className="flex-1 flex flex-col items-center justify-center py-24 space-y-3">
         <div className="w-8 h-8 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm font-medium text-slate-500">Loading...</p>
+        <p className="text-sm font-medium text-slate-500">{t("common.loading")}</p>
       </div>
     );
   }
@@ -349,7 +359,7 @@ export default function TransactionsPage() {
 
   return (
     <div className="flex-1 flex flex-col min-h-screen relative">
-      <Navbar title="Transactions" subtitle="Track your income, expenses, and money moves." />
+      <Navbar title={t("txp.title")} subtitle={t("txp.subtitle")} />
 
       {/* Toast Notification */}
       {toastMessage && (
@@ -361,8 +371,10 @@ export default function TransactionsPage() {
       <main className="flex-1 p-4 md:p-8 space-y-6 max-w-7xl w-full mx-auto">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white truncate">Transaction History</h2>
-            <p className="text-xs text-slate-500 truncate">Filter or record income, expenses, and money moves</p>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white truncate">
+              {t("txp.historyTitle")}
+            </h2>
+            <p className="text-xs text-slate-500 line-clamp-2">{t("txp.historySubtitle")}</p>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
@@ -396,33 +408,35 @@ export default function TransactionsPage() {
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-20 space-y-3">
             <div className="w-8 h-8 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm font-medium text-slate-500">Loading history...</p>
+            <p className="text-sm font-medium text-slate-500">{t("txp.loadingHistory")}</p>
           </div>
         ) : mainError ? (
           <div className="p-6 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-center space-y-4 max-w-md mx-auto my-12">
             <AlertCircle className="w-10 h-10 text-rose-500 mx-auto" />
             <div>
-              <h3 className="font-semibold text-rose-700 dark:text-rose-400 text-base">Failed to Load</h3>
-              <p className="text-xs text-rose-600 dark:text-rose-300 mt-1">{mainError}</p>
+              <h3 className="font-semibold text-rose-700 dark:text-rose-400 text-base">
+                {t("txp.failedLoad")}
+              </h3>
+              <p className="text-xs text-rose-600 dark:text-rose-300 mt-1">{displayError(mainError)}</p>
             </div>
             <button
               onClick={retryMain}
               className="inline-flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-xl transition-colors cursor-pointer"
             >
               <RefreshCw className="w-4 h-4" />
-              Try Again
+              {t("common.tryAgain")}
             </button>
           </div>
         ) : (
           <>
             {moveWarning && (
               <div className="flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 text-[11px] text-amber-700 dark:text-amber-300">
-                <span>Move Money history could not be loaded.</span>
+                <span>{t("txp.moveWarning")}</span>
                 <button
                   onClick={loadTransfers}
                   className="font-semibold underline underline-offset-2 cursor-pointer shrink-0"
                 >
-                  Retry
+                  {t("common.tryAgain")}
                 </button>
               </div>
             )}
@@ -446,6 +460,7 @@ export default function TransactionsPage() {
         initialData={selectedTransaction}
         defaultType={defaultType}
         categories={categories}
+        accounts={accounts}
         onSubmit={handleSaveTransaction}
         loading={modalLoading}
       />
@@ -461,18 +476,20 @@ export default function TransactionsPage() {
         loading={transferLoading}
       />
 
-      {/* Consistent Delete Confirm Modal */}
+      {/* Delete Transaction Confirm Modal */}
       <ConfirmModal
         isOpen={Boolean(deleteTarget)}
         onClose={() => setDeleteTarget(null)}
         onConfirm={handleDeleteConfirm}
-        title="Delete Transaction"
+        title={t("txp.deleteTxTitle")}
         description={
           <>
-            Are you sure you want to delete <span className="font-semibold text-slate-900 dark:text-white">"{deleteTarget?.title}"</span>? The related account balance will automatically adjust.
+            {t("txp.deleteTxDescPre")}{" "}
+            <span className="font-semibold text-slate-900 dark:text-white">"{deleteTarget?.title}"</span>
+            {t("txp.deleteTxDescPost")}
           </>
         }
-        confirmLabel="Delete Transaction"
+        confirmLabel={t("txp.deleteTxTitle")}
         variant="danger"
         loading={deleteLoading}
       />
@@ -482,17 +499,21 @@ export default function TransactionsPage() {
         isOpen={Boolean(deleteTransferTarget)}
         onClose={() => setDeleteTransferTarget(null)}
         onConfirm={handleDeleteTransferConfirm}
-        title="Delete Move"
+        title={t("txp.deleteMoveTitle")}
         description={
           <>
-            Delete the move from{" "}
-            <span className="font-semibold text-slate-900 dark:text-white">{deleteTransferTarget?.from_category_name}</span>{" "}
-            to{" "}
-            <span className="font-semibold text-slate-900 dark:text-white">{deleteTransferTarget?.to_category_name}</span>?
-            The money will be returned to the source category.
+            {t("txp.deleteMoveDescPre")}{" "}
+            <span className="font-semibold text-slate-900 dark:text-white">
+              {deleteTransferTarget?.from_category_name}
+            </span>{" "}
+            {t("txp.deleteMoveDescTo")}{" "}
+            <span className="font-semibold text-slate-900 dark:text-white">
+              {deleteTransferTarget?.to_category_name}
+            </span>
+            {t("txp.deleteMoveDescPost")}
           </>
         }
-        confirmLabel="Delete Move"
+        confirmLabel={t("txp.deleteMoveTitle")}
         variant="danger"
         loading={deleteTransferLoading}
       />

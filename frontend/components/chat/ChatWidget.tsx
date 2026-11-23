@@ -5,6 +5,7 @@ import { Check, Send, Sparkles, X } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { ChatAction, executeChatActions, sendChat } from "@/lib/api";
 import { notifyDataChanged } from "@/lib/dataEvents";
+import { useSettings } from "@/lib/settingsContext";
 
 type ActionResult = { ok: boolean; text: string };
 
@@ -18,21 +19,30 @@ type ChatMessage = {
     results?: ActionResult[];
 };
 
-const GREETING: ChatMessage = {
-    id: 0,
-    role: "assistant",
-    text: "Hi! How can I help you today?"
-};
+const isDestructive = (actions?: ChatAction[]) =>
+    Boolean(actions?.some((a) => a.name.startsWith("delete_")));
 
 export default function ChatWidget() {
     const { user } = useAuth();
+    const { t, language } = useSettings();
     const [open, setOpen] = useState(false);
-    const [messages, setMessages] = useState<ChatMessage[]>([GREETING]);
+    const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState("");
     const [sending, setSending] = useState(false);
     const [executingId, setExecutingId] = useState<number | null>(null);
     const nextId = useRef(1);
     const bottomRef = useRef<HTMLDivElement>(null);
+
+    // Initial greeting based on active language
+    useEffect(() => {
+        setMessages([
+            {
+                id: 0,
+                role: "assistant",
+                text: t("chat.greeting"),
+            },
+        ]);
+    }, [language]);
 
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -52,7 +62,7 @@ export default function ChatWidget() {
         if (!text || sending) return;
 
         const history = messages
-            .filter((m) => m.id !== GREETING.id && m.text && !m.isError)
+            .filter((m) => m.id !== 0 && m.text && !m.isError)
             .map((m) => ({ role: m.role, text: m.text }));
 
         push({ role: "user", text });
@@ -60,7 +70,7 @@ export default function ChatWidget() {
         setSending(true);
 
         try {
-            const res = await sendChat(text, history);
+            const res = await sendChat(text, history, language);
             const { reply, actions } = res.data as { reply: string; actions: ChatAction[] };
             push({
                 role: "assistant",
@@ -74,8 +84,10 @@ export default function ChatWidget() {
                 isError: true,
                 text:
                     err.message === "Failed to fetch"
-                        ? "Can't reach the server. Make sure the backend is running, then try again."
-                        : err.message || "Something went wrong. Please try again.",
+                        ? language === "id"
+                            ? "Tidak dapat terhubung ke server backend. Pastikan server aktif lalu coba lagi."
+                            : "Can't reach the server. Make sure the backend is running, then try again."
+                        : err.message || (language === "id" ? "Terjadi kesalahan. Silakan coba lagi." : "Something went wrong. Please try again."),
             });
         } finally {
             setSending(false);
@@ -92,10 +104,12 @@ export default function ChatWidget() {
             if (results.some((r) => r.ok)) notifyDataChanged();
             push({
                 role: "assistant",
-                text: results.some((r) => !r.ok) ? "Some actions failed. See the details above." : "Saved ✅",
+                text: results.some((r) => !r.ok)
+                    ? language === "id" ? "Beberapa aksi gagal dijalankan. Cek detail di atas." : "Some actions failed. See the details above."
+                    : t("chat.saved"),
             });
         } catch (err: any) {
-            push({ role: "assistant", isError: true, text: err.message || "Failed to run the actions." });
+            push({ role: "assistant", isError: true, text: err.message || (language === "id" ? "Gagal menjalankan aksi." : "Failed to run the actions.") });
         } finally {
             setExecutingId(null);
         }
@@ -119,8 +133,8 @@ export default function ChatWidget() {
                     <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-100 dark:border-slate-800">
                         <Sparkles className="w-4 h-4 text-emerald-600" />
                         <div>
-                            <p className="text-sm font-bold text-slate-900 dark:text-white">Finora Assistant</p>
-                            <p className="text-[10px] text-slate-500">Record income, expenses, moves, and categories</p>
+                            <p className="text-sm font-bold text-slate-900 dark:text-white">{t("chat.title")}</p>
+                            <p className="text-[10px] text-slate-500">{t("chat.subtitle")}</p>
                         </div>
                     </div>
 
@@ -159,33 +173,43 @@ export default function ChatWidget() {
                                             </ul>
 
                                             {m.status === "pending" && (
-                                                <div className="flex gap-2">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleConfirm(m)}
-                                                        disabled={executingId === m.id}
-                                                        className="flex-1 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold disabled:opacity-50 cursor-pointer"
-                                                    >
-                                                        {executingId === m.id ? "Saving..." : "Save"}
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => patch(m.id, { status: "cancelled" })}
-                                                        disabled={executingId === m.id}
-                                                        className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-[11px] font-semibold text-slate-600 dark:text-slate-300 cursor-pointer"
-                                                    >
-                                                        Cancel
-                                                    </button>
+                                                <div className="space-y-2">
+                                                    {isDestructive(m.actions) && (
+                                                        <p className="text-[10px] text-rose-600">
+                                                            {t("chat.deleteWarning")}
+                                                        </p>
+                                                    )}
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleConfirm(m)}
+                                                            disabled={executingId === m.id}
+                                                            className={`flex-1 py-1.5 rounded-lg text-white text-[11px] font-semibold disabled:opacity-50 cursor-pointer ${isDestructive(m.actions) ? "bg-rose-600 hover:bg-rose-700" : "bg-emerald-600 hover:bg-emerald-700"
+                                                                }`}
+                                                        >
+                                                            {executingId === m.id
+                                                                ? isDestructive(m.actions) ? t("chat.deleting") : t("chat.saving")
+                                                                : isDestructive(m.actions) ? t("chat.delete") : t("chat.save")}
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => patch(m.id, { status: "cancelled" })}
+                                                            disabled={executingId === m.id}
+                                                            className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-[11px] font-semibold text-slate-600 dark:text-slate-300 cursor-pointer"
+                                                        >
+                                                            {t("common.cancel")}
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             )}
-                                            {m.status === "cancelled" && <p className="text-[10px] text-slate-400">Cancelled</p>}
+                                            {m.status === "cancelled" && <p className="text-[10px] text-slate-400">{t("chat.cancelled")}</p>}
                                         </div>
                                     )}
                                 </div>
                             </div>
                         ))}
 
-                        {sending && <p className="text-[11px] text-slate-400 px-1">Typing...</p>}
+                        {sending && <p className="text-[11px] text-slate-400 px-1">{t("chat.typing")}</p>}
                         <div ref={bottomRef} />
                     </div>
 
@@ -195,7 +219,7 @@ export default function ChatWidget() {
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             maxLength={500}
-                            placeholder="Type a message..."
+                            placeholder={t("chat.placeholder")}
                             className="flex-1 px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                         />
                         <button

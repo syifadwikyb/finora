@@ -1,7 +1,8 @@
 "use client";
 
-import { Category, Transaction } from "@/lib/api";
+import { Account, Category, Transaction } from "@/lib/api";
 import TransactionForm from "./TransactionForm";
+import { useSettings } from "@/lib/settingsContext";
 import { X } from "lucide-react";
 
 interface TransactionModalProps {
@@ -10,6 +11,7 @@ interface TransactionModalProps {
   initialData?: Transaction | null;
   defaultType?: "income" | "expense";
   categories: Category[];
+  accounts?: Account[];
   onSubmit: (formData: any) => Promise<void>;
   loading: boolean;
 }
@@ -20,9 +22,12 @@ export default function TransactionModal({
   initialData,
   defaultType = "expense",
   categories,
+  accounts = [],
   onSubmit,
   loading,
 }: TransactionModalProps) {
+  const { t, appMode } = useSettings();
+
   if (!isOpen) return null;
 
   return (
@@ -31,14 +36,16 @@ export default function TransactionModal({
         <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800 mb-4">
           <div>
             <h3 className="font-semibold text-lg text-slate-900 dark:text-white">
-              {initialData ? "Edit Transaction" : "Record Transaction"}
+              {initialData ? t("tx.editTitle") : t("tx.recordTitle")}
             </h3>
             <p className="text-xs text-slate-500">
-              Account is automatically assigned based on selected category
+              {appMode === "flexible" ? t("tx.subtitleFlexible") : t("tx.subtitleEnvelope")}
             </p>
           </div>
           <button
+            type="button"
             onClick={onClose}
+            aria-label={t("common.close")}
             className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
           >
             <X className="w-5 h-5" />
@@ -49,6 +56,7 @@ export default function TransactionModal({
           initialData={initialData}
           defaultType={defaultType}
           categories={categories}
+          accounts={accounts}
           onSubmit={onSubmit}
           onCancel={onClose}
           loading={loading}
