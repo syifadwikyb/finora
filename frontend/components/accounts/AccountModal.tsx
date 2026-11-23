@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { X, Landmark } from "lucide-react";
+import { useSettings } from "@/lib/settingsContext";
 
 interface AccountModalProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ export default function AccountModal({
   onSubmit,
   loading,
 }: AccountModalProps) {
+  const { t, appMode } = useSettings();
   const [formData, setFormData] = useState({
     name: "",
     type: "bank",
@@ -30,7 +32,7 @@ export default function AccountModal({
     setFormError("");
 
     if (!formData.name.trim()) {
-      setFormError("Account name is required");
+      setFormError(t("accounts.errNameRequired"));
       return;
     }
 
@@ -42,9 +44,12 @@ export default function AccountModal({
       });
       setFormData({ name: "", type: "bank", account_number: "" });
     } catch (err: any) {
-      setFormError(err.message || "Failed to save account");
+      setFormError(err.message || t("accounts.errSave"));
     }
   };
+
+  const fieldClass =
+    "w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500";
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
@@ -55,12 +60,16 @@ export default function AccountModal({
               <Landmark className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="font-semibold text-base text-slate-900 dark:text-white">Add New Account</h3>
-              <p className="text-[11px] text-slate-400">Physical bank, e-wallet, or cash envelope</p>
+              <h3 className="font-semibold text-base text-slate-900 dark:text-white">
+                {t("accounts.addNewTitle")}
+              </h3>
+              <p className="text-[11px] text-slate-400">{t("accounts.modalSubtitle")}</p>
             </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
+            aria-label={t("common.close")}
             className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
           >
             <X className="w-5 h-5" />
@@ -75,46 +84,52 @@ export default function AccountModal({
 
         <form onSubmit={handleSubmit} className="space-y-4 text-xs">
           <div>
-            <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Account Name *</label>
+            <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              {t("accounts.accountName")} *
+            </label>
             <input
               type="text"
-              placeholder="e.g. Bank BCA, SeaBank, Cash Wallet"
+              placeholder={t("accounts.namePlaceholder")}
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+              className={fieldClass}
               required
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Type</label>
+              <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                {t("common.type")}
+              </label>
               <select
                 value={formData.type}
                 onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                className={fieldClass}
               >
-                <option value="bank">Bank</option>
-                <option value="ewallet">E-Wallet</option>
-                <option value="cash">Cash</option>
-                <option value="investment">Investment</option>
+                <option value="bank">{t("accounts.type_bank")}</option>
+                <option value="ewallet">{t("accounts.type_ewallet")}</option>
+                <option value="cash">{t("accounts.type_cash")}</option>
+                <option value="investment">{t("accounts.type_investment")}</option>
               </select>
             </div>
 
             <div>
-              <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Account / Number</label>
+              <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                {t("accounts.accountNumber")}
+              </label>
               <input
                 type="text"
-                placeholder="Optional"
+                placeholder={t("common.optional")}
                 value={formData.account_number}
                 onChange={(e) => setFormData({ ...formData, account_number: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                className={fieldClass}
               />
             </div>
           </div>
 
           <p className="text-[11px] text-slate-500 bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
-            💡 Account balance is automatically calculated from categories linked to this account.
+            {appMode === "flexible" ? t("accounts.hintFlexible") : t("accounts.hintEnvelope")}
           </p>
 
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
@@ -124,14 +139,14 @@ export default function AccountModal({
               disabled={loading}
               className="px-4 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium cursor-pointer"
             >
-              Cancel
+              {t("common.cancel")}
             </button>
             <button
               type="submit"
               disabled={loading}
               className="px-5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-700 text-white font-semibold transition-colors disabled:opacity-50 cursor-pointer"
             >
-              {loading ? "Saving..." : "Save Account"}
+              {loading ? t("common.saving") : t("accounts.save")}
             </button>
           </div>
         </form>

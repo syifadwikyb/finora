@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Account, Category } from "@/lib/api";
+import { useSettings } from "@/lib/settingsContext";
 import { X, Landmark } from "lucide-react";
 
 interface CategoryFormProps {
@@ -21,6 +22,7 @@ export default function CategoryForm({
   onSubmit,
   loading,
 }: CategoryFormProps) {
+  const { t, appMode } = useSettings();
   const [name, setName] = useState("");
   const [accountId, setAccountId] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
@@ -43,7 +45,7 @@ export default function CategoryForm({
     setErrorMsg("");
 
     if (!name.trim()) {
-      setErrorMsg("Category name is required");
+      setErrorMsg(t("categories.errNameRequired"));
       return;
     }
 
@@ -53,9 +55,12 @@ export default function CategoryForm({
         account_id: accountId ? Number(accountId) : null,
       });
     } catch (err: any) {
-      setErrorMsg(err.message || "Failed to save category");
+      setErrorMsg(err.message || t("categories.errSave"));
     }
   };
+
+  const fieldClass =
+    "w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500";
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
@@ -63,14 +68,16 @@ export default function CategoryForm({
         <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 mb-4">
           <div>
             <h3 className="font-semibold text-base text-slate-900 dark:text-white">
-              {initialData ? "Edit Category" : "New Category"}
+              {initialData ? t("categories.editTitle") : t("categories.newTitle")}
             </h3>
             <p className="text-[11px] text-slate-400">
-              Link to an account for automatic balance deduction
+              {appMode === "flexible" ? t("categories.formSubtitleFlexible") : t("categories.formSubtitleEnvelope")}
             </p>
           </div>
           <button
+            type="button"
             onClick={onClose}
+            aria-label={t("common.close")}
             className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
           >
             <X className="w-5 h-5" />
@@ -86,41 +93,38 @@ export default function CategoryForm({
 
           <div>
             <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Category Name *
+              {t("categories.name")} *
             </label>
             <input
               type="text"
-              placeholder="e.g. Groceries, Rent, Salary, Entertainment"
+              placeholder={t("categories.namePlaceholder")}
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+              className={fieldClass}
               required
             />
           </div>
 
           <div>
-            <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center justify-between">
+            <label className="font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center justify-between gap-2">
               <span className="flex items-center gap-1.5">
                 <Landmark className="w-3.5 h-3.5 text-emerald-600" />
-                Akun Terikat (Opsional / Mode Amplop)
+                {t("categories.linkedAccountLabel")}
               </span>
-              <span className="text-[10px] text-slate-400 font-normal">Bisa dikosongkan untuk kategori universal</span>
+              <span className="text-[10px] text-slate-400 font-normal text-right">
+                {t("categories.linkedAccountHint")}
+              </span>
             </label>
-            <select
-              value={accountId}
-              onChange={(e) => setAccountId(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-            >
-              <option value="">-- Kategori Universal (Bisa dipakai di semua akun) --</option>
+            <select value={accountId} onChange={(e) => setAccountId(e.target.value)} className={fieldClass}>
+              <option value="">-- {t("categories.universalOption")} --</option>
               {accounts.map((acc) => (
                 <option key={acc.id} value={acc.id}>
-                  {acc.name} ({acc.type}) • Rp {Number(acc.current_balance).toLocaleString("id-ID")}
+                  {acc.name} ({t(`accounts.type_${acc.type}`)}) • Rp{" "}
+                  {Number(acc.current_balance).toLocaleString("id-ID")}
                 </option>
               ))}
             </select>
-            <p className="text-[10px] text-slate-400 mt-1">
-              Jika dikosongkan, kategori ini bisa digunakan bebas dengan rekening/dompet mana saja (misal: SeaBank, BCA, BRI, Tunai).
-            </p>
+            <p className="text-[10px] text-slate-400 mt-1">{t("categories.universalDesc")}</p>
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
@@ -130,14 +134,18 @@ export default function CategoryForm({
               disabled={loading}
               className="px-4 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium cursor-pointer"
             >
-              Cancel
+              {t("common.cancel")}
             </button>
             <button
               type="submit"
               disabled={loading}
               className="px-5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-700 text-white font-semibold transition-colors disabled:opacity-50 cursor-pointer"
             >
-              {loading ? "Saving..." : initialData ? "Update Category" : "Save Category"}
+              {loading
+                ? t("common.saving")
+                : initialData
+                  ? t("categories.update")
+                  : t("categories.save")}
             </button>
           </div>
         </form>
