@@ -1,6 +1,7 @@
 "use client";
 
 import { Sun, Moon, Laptop } from "lucide-react";
+import { useSettings } from "@/lib/settingsContext";
 
 interface ThemeSelectorProps {
   theme: "light" | "dark" | "system";
@@ -8,6 +9,14 @@ interface ThemeSelectorProps {
 }
 
 export default function ThemeSelector({ theme, onThemeChange }: ThemeSelectorProps) {
+  const { t } = useSettings();
+
+  const options = [
+    { id: "light", label: t("prf.themeLight"), icon: Sun },
+    { id: "dark", label: t("prf.themeDark"), icon: Moon },
+    { id: "system", label: t("prf.themeSystem"), icon: Laptop },
+  ];
+
   return (
     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs">
       <div className="flex items-center gap-3 pb-4 border-b border-slate-100 dark:border-slate-800 mb-5">
@@ -15,27 +24,23 @@ export default function ThemeSelector({ theme, onThemeChange }: ThemeSelectorPro
           <Sun className="w-5 h-5" />
         </div>
         <div>
-          <h3 className="font-bold text-base text-slate-900 dark:text-white">Theme & Display</h3>
-          <p className="text-xs text-slate-500">Pilih mode tampilan</p>
+          <h3 className="font-bold text-base text-slate-900 dark:text-white">{t("prf.themeTitle")}</h3>
+          <p className="text-xs text-slate-500">{t("prf.themeDesc")}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-3 gap-2.5">
-        {[
-          { id: "light", label: "Light", icon: Sun },
-          { id: "dark", label: "Dark", icon: Moon },
-          { id: "system", label: "System", icon: Laptop },
-        ].map((item) => {
+        {options.map((item) => {
           const Icon = item.icon;
           const isSelected = theme === item.id;
           return (
             <button
               key={item.id}
               type="button"
-              onClick={() => onThemeChange(item.id as any)}
+              onClick={() => onThemeChange(item.id as "light" | "dark" | "system")}
               className={`flex flex-col items-center justify-center p-3 rounded-xl border text-xs font-semibold transition-all ${isSelected
-                ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 shadow-xs ring-1 ring-emerald-500"
-                : "border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                  ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 shadow-xs ring-1 ring-emerald-500"
+                  : "border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50"
                 }`}
             >
               <Icon className="w-5 h-5 mb-1.5" />

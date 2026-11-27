@@ -7,11 +7,12 @@ import CategoryForm from "@/components/categories/CategoryForm";
 import ConfirmModal from "@/components/ui/ConfirmModal";
 import { Account, Category, createCategory, deleteCategory, getAccounts, getCategories, updateCategory } from "@/lib/api";
 import { AlertCircle, FolderPlus, RefreshCw } from "lucide-react";
-
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useRouter } from "next/navigation";
+import { useSettings } from "@/lib/settingsContext";
 
 export default function CategoriesPage() {
+  const { t, appMode } = useSettings();
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
 
@@ -20,16 +21,13 @@ export default function CategoriesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Form Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [modalLoading, setModalLoading] = useState(false);
 
-  // Delete Confirmation state
   const [deleteTarget, setDeleteTarget] = useState<Category | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  // Toast message
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
@@ -55,7 +53,7 @@ export default function CategoriesPage() {
       setAccounts(accRes.data || []);
     } catch (err: any) {
       console.error("Failed to load categories:", err);
-      setError(err.message || "Failed to load categories.");
+      setError(err.message || t("categories.errLoad"));
     } finally {
       setLoading(false);
     }
@@ -65,6 +63,7 @@ export default function CategoriesPage() {
     if (user && !authLoading) {
       loadData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, authLoading]);
 
   const handleOpenAdd = () => {
@@ -82,10 +81,10 @@ export default function CategoriesPage() {
     try {
       if (selectedCategory) {
         await updateCategory(selectedCategory.id, data);
-        showToast("Category updated.");
+        showToast(t("categories.toastUpdated"));
       } else {
         await createCategory(data);
-        showToast("New category created.");
+        showToast(t("categories.toastCreated"));
       }
       setIsModalOpen(false);
       loadData();
@@ -101,11 +100,11 @@ export default function CategoriesPage() {
     setDeleteLoading(true);
     try {
       await deleteCategory(deleteTarget.id);
-      showToast("Category deleted.");
+      showToast(t("categories.toastDeleted"));
       setDeleteTarget(null);
       loadData();
     } catch (err: any) {
-      showToast(err.message || "Failed to delete category");
+      showToast(err.message || t("categories.errDelete"));
     } finally {
       setDeleteLoading(false);
     }
@@ -115,7 +114,7 @@ export default function CategoriesPage() {
     return (
       <div className="flex-1 flex flex-col items-center justify-center py-24 space-y-3">
         <div className="w-8 h-8 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm font-medium text-slate-500">Loading...</p>
+        <p className="text-sm font-medium text-slate-500">{t("common.loading")}</p>
       </div>
     );
   }
@@ -126,9 +125,13 @@ export default function CategoriesPage() {
 
   return (
     <div className="flex-1 flex flex-col min-h-screen relative pb-16">
-      <Navbar title="Categories" subtitle="Manage envelope categories linked to your physical accounts." />
+      <Navbar
+        title={t("nav.categories")}
+        subtitle={
+          appMode === "flexible" ? t("categories.pageSubtitleFlexible") : t("categories.pageSubtitleEnvelope")
+        }
+      />
 
-      {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-5 right-5 z-50 bg-emerald-700 text-white text-xs font-semibold px-4 py-3 rounded-xl shadow-xl animate-in fade-in slide-in-from-bottom-3 duration-200">
           {toastMessage}
@@ -138,13 +141,12 @@ export default function CategoriesPage() {
       <main className="flex-1 p-4 md:p-8 space-y-6 max-w-7xl w-full mx-auto">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white">Category List</h2>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white">{t("categories.listTitle")}</h2>
             <p className="text-xs text-slate-500">
-              Each category links to an account for automatic balance tracking
+              {appMode === "flexible" ? t("categories.listSubtitleFlexible") : t("categories.listSubtitleEnvelope")}
             </p>
           </div>
 
-          {/* Add Category: tombol solid, animasi seperti dashboard */}
           <button
             type="button"
             onClick={handleOpenAdd}
@@ -153,20 +155,22 @@ export default function CategoriesPage() {
             <span className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
               <FolderPlus className="w-4 h-4 text-white" />
             </span>
-            Add Category
+            {t("categories.addCategory")}
           </button>
         </div>
 
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 space-y-3">
             <div className="w-8 h-8 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm font-medium text-slate-500">Loading categories...</p>
+            <p className="text-sm font-medium text-slate-500">{t("categories.loading")}</p>
           </div>
         ) : error ? (
           <div className="p-6 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-center space-y-4 max-w-md mx-auto my-12">
             <AlertCircle className="w-10 h-10 text-rose-500 mx-auto" />
             <div>
-              <h3 className="font-semibold text-rose-700 dark:text-rose-400 text-base">Failed to Load Categories</h3>
+              <h3 className="font-semibold text-rose-700 dark:text-rose-400 text-base">
+                {t("categories.failedLoad")}
+              </h3>
               <p className="text-xs text-rose-600 dark:text-rose-300 mt-1">{error}</p>
             </div>
             <button
@@ -174,7 +178,7 @@ export default function CategoriesPage() {
               className="inline-flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-xl transition-colors cursor-pointer"
             >
               <RefreshCw className="w-4 h-4" />
-              Try Again
+              {t("common.tryAgain")}
             </button>
           </div>
         ) : (
@@ -186,7 +190,6 @@ export default function CategoriesPage() {
         )}
       </main>
 
-      {/* Add / Edit Modal */}
       <CategoryForm
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -196,18 +199,19 @@ export default function CategoriesPage() {
         loading={modalLoading}
       />
 
-      {/* Consistent Delete Confirm Modal */}
       <ConfirmModal
         isOpen={Boolean(deleteTarget)}
         onClose={() => setDeleteTarget(null)}
         onConfirm={handleDeleteConfirm}
-        title="Delete Category"
+        title={t("categories.deleteTitle")}
         description={
           <>
-            Are you sure you want to delete <span className="font-semibold text-slate-900 dark:text-white">"{deleteTarget?.name}"</span>?
+            {t("categories.deleteDescPre")}{" "}
+            <span className="font-semibold text-slate-900 dark:text-white">"{deleteTarget?.name}"</span>
+            {t("categories.deleteDescPost")}
           </>
         }
-        confirmLabel="Delete Category"
+        confirmLabel={t("categories.deleteTitle")}
         variant="danger"
         loading={deleteLoading}
       />

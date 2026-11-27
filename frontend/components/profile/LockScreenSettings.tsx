@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { KeyRound } from "lucide-react";
 import { User } from "firebase/auth";
+import { useSettings } from "@/lib/settingsContext";
 
 type LockMethod = "none" | "pin";
 
@@ -19,6 +20,7 @@ async function hashPin(pin: string): Promise<string> {
 }
 
 export default function LockScreenSettings({ user }: LockScreenSettingsProps) {
+  const { t } = useSettings();
   const [lockMethod, setLockMethod] = useState<LockMethod>("none");
   const [pinInput, setPinInput] = useState("");
   const [confirmPinInput, setConfirmPinInput] = useState("");
@@ -31,7 +33,6 @@ export default function LockScreenSettings({ user }: LockScreenSettingsProps) {
       const saved = localStorage.getItem(`finora_lock_method_${user.uid}`);
       if (saved === "pin") {
         setLockMethod("pin");
-        // Pastikan cookie finora_pin_enabled juga ter-set jika PIN sudah ada di localStorage
         const pinExists = localStorage.getItem(`finora_lock_pin_${user.uid}`);
         if (pinExists) {
           document.cookie = "finora_pin_enabled=true; path=/; SameSite=Lax";
@@ -45,12 +46,12 @@ export default function LockScreenSettings({ user }: LockScreenSettingsProps) {
     setMessage(null);
 
     if (pinInput.length !== 4 || !/^\d{4}$/.test(pinInput)) {
-      setError("PIN harus 4 digit angka.");
+      setError(t("lock.errFormat"));
       return;
     }
 
     if (pinInput !== confirmPinInput) {
-      setError("PIN tidak cocok.");
+      setError(t("lock.errMismatch"));
       return;
     }
 
@@ -59,16 +60,15 @@ export default function LockScreenSettings({ user }: LockScreenSettingsProps) {
       const hashedPin = await hashPin(pinInput);
       localStorage.setItem(`finora_lock_pin_${user.uid}`, hashedPin);
       localStorage.setItem(`finora_lock_method_${user.uid}`, "pin");
-      // Aktifkan cookie finora_pin_enabled agar middleware tahu PIN sudah diaktifkan
       document.cookie = "finora_pin_enabled=true; path=/; SameSite=Lax";
       document.cookie = "finora_pin_verified=true; path=/; SameSite=Lax";
       setLockMethod("pin");
       setPinInput("");
       setConfirmPinInput("");
-      setMessage("PIN berhasil diaktifkan! Setiap kali refresh atau masuk baru akan memerlukan PIN ini.");
+      setMessage(t("lock.successEnabled"));
       setTimeout(() => setMessage(null), 4000);
     } catch {
-      setError("Gagal menyimpan PIN. Coba lagi.");
+      setError(t("lock.errSave"));
     } finally {
       setSettingPin(false);
     }
@@ -77,36 +77,41 @@ export default function LockScreenSettings({ user }: LockScreenSettingsProps) {
   const handleDisableLock = () => {
     localStorage.removeItem(`finora_lock_method_${user.uid}`);
     localStorage.removeItem(`finora_lock_pin_${user.uid}`);
-    // Hapus cookie finora_pin_enabled agar middleware tidak lagi meminta PIN
     document.cookie = "finora_pin_enabled=; path=/; max-age=0; SameSite=Lax";
     document.cookie = "finora_pin_verified=; path=/; max-age=0; SameSite=Lax";
     setLockMethod("none");
     setPinInput("");
     setConfirmPinInput("");
-    setMessage("Proteksi PIN dinonaktifkan.");
+    setMessage(t("lock.successDisabled"));
     setTimeout(() => setMessage(null), 4000);
   };
+
+  const pinInputClass =
+    "w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-xs text-center tracking-[0.5em] font-mono";
 
   return (
     <div className="space-y-3">
       {/* Current status */}
       <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
-        <span className="text-xs text-slate-500">Proteksi PIN</span>
-        <span className={`text-xs font-semibold ${lockMethod === "none" ? "text-slate-400" : "text-emerald-600 dark:text-emerald-400"}`}>
-          {lockMethod === "none" && "Tidak Aktif"}
-          {lockMethod === "pin" && "🔒 PIN Aktif"}
+        <span className="text-xs text-slate-500">{t("lock.status")}</span>
+        <span
+          className={`text-xs font-semibold ${lockMethod === "none" ? "text-slate-400" : "text-emerald-600 dark:text-emerald-400"
+            }`}
+        >
+          {lockMethod === "none" && t("lock.inactive")}
+          {lockMethod === "pin" && `🔒 ${t("lock.active")}`}
         </span>
       </div>
 
       {lockMethod === "none" ? (
         <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
               <KeyRound className="w-4 h-4" />
             </div>
             <div>
-              <h4 className="font-semibold text-xs text-slate-900 dark:text-white">Atur PIN Keamanan 4 Digit</h4>
-              <p className="text-[11px] text-slate-500">Wajib masukkan PIN saat buka aplikasi atau refresh halaman</p>
+              <h4 className="font-semibold text-xs text-slate-900 dark:text-white">{t("lock.setTitle")}</h4>
+              <p className="text-[11px] text-slate-500">{t("lock.setDesc")}</p>
             </div>
           </div>
 
@@ -115,19 +120,19 @@ export default function LockScreenSettings({ user }: LockScreenSettingsProps) {
               type="password"
               inputMode="numeric"
               maxLength={4}
-              placeholder="Masukkan PIN 4 digit"
+              placeholder={t("lock.pinPlaceholder")}
               value={pinInput}
               onChange={(e) => setPinInput(e.target.value.replace(/\D/g, "").slice(0, 4))}
-              className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-xs text-center tracking-[0.5em] font-mono"
+              className={pinInputClass}
             />
             <input
               type="password"
               inputMode="numeric"
               maxLength={4}
-              placeholder="Konfirmasi PIN 4 digit"
+              placeholder={t("lock.confirmPlaceholder")}
               value={confirmPinInput}
               onChange={(e) => setConfirmPinInput(e.target.value.replace(/\D/g, "").slice(0, 4))}
-              className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-xs text-center tracking-[0.5em] font-mono"
+              className={pinInputClass}
             />
             <button
               type="button"
@@ -135,7 +140,7 @@ export default function LockScreenSettings({ user }: LockScreenSettingsProps) {
               disabled={settingPin || pinInput.length < 4}
               className="w-full py-2 bg-emerald-700 hover:bg-emerald-700 text-white font-medium text-xs rounded-xl transition-colors disabled:opacity-50 cursor-pointer"
             >
-              {settingPin ? "Menyimpan PIN..." : "Aktifkan PIN"}
+              {settingPin ? t("lock.saving") : t("lock.enable")}
             </button>
           </div>
         </div>
@@ -145,7 +150,7 @@ export default function LockScreenSettings({ user }: LockScreenSettingsProps) {
           onClick={handleDisableLock}
           className="w-full py-2 px-4 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
         >
-          Nonaktifkan Proteksi PIN
+          {t("lock.disable")}
         </button>
       )}
 

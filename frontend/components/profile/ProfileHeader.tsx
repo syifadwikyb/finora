@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Camera, Trash2, X, CalendarDays, Mail } from "lucide-react";
 import { User } from "firebase/auth";
+import { useSettings } from "@/lib/settingsContext";
 
 interface ProfileHeaderProps {
   user: User;
@@ -12,13 +13,14 @@ interface ProfileHeaderProps {
   onPhotoChange: (url: string) => void;
 }
 
+// Melempar kode error ("read" | "invalid" | "unsupported"); diterjemahkan di komponen
 const resizeImageToDataUrl = (file: File, size = 256): Promise<string> =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onerror = () => reject(new Error("Failed to read the file"));
+    reader.onerror = () => reject(new Error("read"));
     reader.onload = () => {
       const img = new Image();
-      img.onerror = () => reject(new Error("The file is not a valid image"));
+      img.onerror = () => reject(new Error("invalid"));
       img.onload = () => {
         const side = Math.min(img.width, img.height);
         const sx = (img.width - side) / 2;
@@ -27,7 +29,7 @@ const resizeImageToDataUrl = (file: File, size = 256): Promise<string> =>
         canvas.width = size;
         canvas.height = size;
         const ctx = canvas.getContext("2d");
-        if (!ctx) return reject(new Error("Your browser does not support image processing"));
+        if (!ctx) return reject(new Error("unsupported"));
 
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(0, 0, size, size);
@@ -47,6 +49,7 @@ const getInitials = (name: string) => {
 };
 
 export default function ProfileHeader({ user, displayName, username, photoURL, onPhotoChange }: ProfileHeaderProps) {
+  const { t } = useSettings();
   const [imgError, setImgError] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -79,9 +82,7 @@ export default function ProfileHeader({ user, displayName, username, photoURL, o
       const key = `finora_profile_${user.uid}`;
       const saved = JSON.parse(localStorage.getItem(key) || "{}");
       localStorage.setItem(key, JSON.stringify({ ...saved, photoURL: "" }));
-    } catch {
-
-    }
+    } catch { }
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -89,11 +90,11 @@ export default function ProfileHeader({ user, displayName, username, photoURL, o
     e.target.value = "";
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      setPhotoError("File must be an image (JPG, PNG, or WebP)");
+      setPhotoError(t("hdr.errNotImage"));
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      setPhotoError("Photo size must be 5 MB or less");
+      setPhotoError(t("hdr.errTooLarge"));
       return;
     }
 
@@ -105,10 +106,13 @@ export default function ProfileHeader({ user, displayName, username, photoURL, o
         const key = `finora_profile_${user.uid}`;
         const saved = JSON.parse(localStorage.getItem(key) || "{}");
         localStorage.setItem(key, JSON.stringify({ ...saved, photoURL: dataUrl }));
-      } catch {
-      }
+      } catch { }
     } catch (err: any) {
-      setPhotoError(err.message);
+      const code = err?.message;
+      if (code === "read") setPhotoError(t("hdr.errRead"));
+      else if (code === "invalid") setPhotoError(t("hdr.errInvalid"));
+      else if (code === "unsupported") setPhotoError(t("hdr.errUnsupported"));
+      else setPhotoError(t("hdr.errGeneric"));
     }
   };
 
@@ -137,14 +141,14 @@ export default function ProfileHeader({ user, displayName, username, photoURL, o
                 type="button"
                 onClick={() => setPreviewOpen(true)}
                 disabled={!showPhoto}
-                aria-label="View profile photo"
+                aria-label={t("hdr.viewPhoto")}
                 className={`w-full h-full rounded-full overflow-hidden bg-emerald-900/40 flex items-center justify-center ${showPhoto ? "cursor-zoom-in" : "cursor-default"
                   }`}
               >
                 {showPhoto ? (
                   <img
                     src={photoURL}
-                    alt={displayName || "Foto profil"}
+                    alt={displayName || t("hdr.photoAlt")}
                     onError={() => setImgError(true)}
                     className="w-full h-full object-cover"
                   />
@@ -166,8 +170,8 @@ export default function ProfileHeader({ user, displayName, username, photoURL, o
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              aria-label="Change profile photo"
-              title="Change profile photo"
+              aria-label={t("hdr.changePhoto")}
+              title={t("hdr.changePhoto")}
               className="absolute bottom-1 right-1 w-8 h-8 rounded-full bg-white text-emerald-700 border-2 border-emerald-600 dark:border-emerald-900 flex items-center justify-center shadow-md hover:scale-110 active:scale-95 transition-transform"
             >
               <Camera className="w-4 h-4" />
@@ -177,8 +181,8 @@ export default function ProfileHeader({ user, displayName, username, photoURL, o
               <button
                 type="button"
                 onClick={() => setConfirmOpen(true)}
-                aria-label="Remove profile photo"
-                title="Remove profile photo"
+                aria-label={t("hdr.removePhoto")}
+                title={t("hdr.removePhoto")}
                 className="absolute bottom-1 left-1 w-8 h-8 rounded-full bg-white text-rose-600 border-2 border-emerald-600 dark:border-emerald-900 flex items-center justify-center shadow-md hover:scale-110 active:scale-95 transition-transform"
               >
                 <Trash2 className="w-4 h-4" />
@@ -188,11 +192,9 @@ export default function ProfileHeader({ user, displayName, username, photoURL, o
 
           <div className="text-center sm:text-left space-y-1 flex-1 min-w-0">
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight truncate">
-              {displayName || "Finora User"}
+              {displayName || t("hdr.defaultName")}
             </h2>
-            <p className="text-emerald-100 text-sm font-medium">
-              @{username || "username"}
-            </p>
+            <p className="text-emerald-100 text-sm font-medium">@{username || t("hdr.defaultUsername")}</p>
             <p className="text-emerald-100/70 text-sm flex items-center justify-center sm:justify-start gap-1.5 min-w-0">
               <Mail className="w-3.5 h-3.5 shrink-0" />
               <span className="truncate">{user.email}</span>
@@ -200,12 +202,10 @@ export default function ProfileHeader({ user, displayName, username, photoURL, o
             <div className="pt-3 flex flex-wrap items-center justify-center sm:justify-start gap-2">
               <span className="inline-flex items-center gap-1.5 text-[11px] px-3 py-1 rounded-full bg-black/20 border border-white/10 text-emerald-100">
                 <CalendarDays className="w-3.5 h-3.5" />
-                Member since {memberSince}
+                {t("hdr.memberSince")} {memberSince}
               </span>
             </div>
-            {photoError && (
-              <p className="text-xs text-rose-200 pt-1">{photoError}</p>
-            )}
+            {photoError && <p className="text-xs text-rose-200 pt-1">{photoError}</p>}
           </div>
         </div>
       </div>
@@ -218,14 +218,14 @@ export default function ProfileHeader({ user, displayName, username, photoURL, o
           <button
             type="button"
             onClick={() => setPreviewOpen(false)}
-            aria-label="Close preview"
+            aria-label={t("hdr.closePreview")}
             className="absolute right-4 top-[max(1rem,env(safe-area-inset-top))] w-10 h-10 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
           <img
             src={photoURL}
-            alt={displayName || "Profile photo"}
+            alt={displayName || t("hdr.photoAlt")}
             onClick={(e) => e.stopPropagation()}
             className="max-w-full max-h-[80vh] rounded-3xl object-contain shadow-2xl"
           />
@@ -248,30 +248,27 @@ export default function ProfileHeader({ user, displayName, username, photoURL, o
               <Trash2 className="w-6 h-6" />
             </div>
 
-            <h3
-              id="remove-photo-title"
-              className="text-lg font-bold text-slate-900 dark:text-white"
-            >
-              Remove profile photo?
+            <h3 id="remove-photo-title" className="text-lg font-bold text-slate-900 dark:text-white">
+              {t("hdr.removeTitle")}
             </h3>
             <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-              Your photo will be removed and replaced with your initials. You can upload a new one anytime.
+              {t("hdr.removeDesc")}
             </p>
 
             <div className="mt-6 grid grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => setConfirmOpen(false)}
-                className="py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                className="py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               >
-                Cancel
+                {t("common.cancel")}
               </button>
               <button
                 type="button"
                 onClick={handleRemovePhoto}
-                className="py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-sm shadow-md shadow-rose-600/25 transition-colors active:scale-[0.98]"
+                className="py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-sm shadow-md shadow-rose-600/25 transition-colors active:scale-[0.98] cursor-pointer"
               >
-                Remove
+                {t("hdr.remove")}
               </button>
             </div>
           </div>

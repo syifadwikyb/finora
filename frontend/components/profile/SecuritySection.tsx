@@ -4,6 +4,7 @@ import { useState } from "react";
 import { KeyRound, CheckCircle2, AlertCircle } from "lucide-react";
 import { User } from "firebase/auth";
 import { changePassword, getAuthErrorMessage } from "@/lib/firebase";
+import { useSettings } from "@/lib/settingsContext";
 import LockScreenSettings from "./LockScreenSettings";
 
 interface SecuritySectionProps {
@@ -12,6 +13,7 @@ interface SecuritySectionProps {
 }
 
 export default function SecuritySection({ user }: SecuritySectionProps) {
+  const { t } = useSettings();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -25,24 +27,24 @@ export default function SecuritySection({ user }: SecuritySectionProps) {
     setPasswordSuccess(null);
 
     if (!currentPassword) {
-      setPasswordError("Enter your current password.");
+      setPasswordError(t("sec.errCurrent"));
       return;
     }
 
     if (newPassword.length < 6) {
-      setPasswordError("New password must be at least 6 characters.");
+      setPasswordError(t("sec.errMinLength"));
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setPasswordError("Passwords do not match.");
+      setPasswordError(t("sec.errMismatch"));
       return;
     }
 
     setPasswordSaving(true);
     try {
       await changePassword(currentPassword, newPassword);
-      setPasswordSuccess("Password updated successfully.");
+      setPasswordSuccess(t("sec.success"));
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
@@ -54,6 +56,10 @@ export default function SecuritySection({ user }: SecuritySectionProps) {
     }
   };
 
+  const inputClass =
+    "w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-xs";
+  const labelClass = "block font-medium text-slate-700 dark:text-slate-300 mb-1";
+
   return (
     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs space-y-6">
       <div className="flex items-center gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
@@ -61,23 +67,21 @@ export default function SecuritySection({ user }: SecuritySectionProps) {
           <KeyRound className="w-5 h-5" />
         </div>
         <div>
-          <h3 className="font-bold text-base text-slate-900 dark:text-white">Security & Login</h3>
-          <p className="text-xs text-slate-500">PIN verification & password management</p>
+          <h3 className="font-bold text-base text-slate-900 dark:text-white">{t("sec.title")}</h3>
+          <p className="text-xs text-slate-500">{t("sec.subtitle")}</p>
         </div>
       </div>
 
       {/* App PIN Lock Settings */}
       <div>
-        <h4 className="font-semibold text-xs text-slate-900 dark:text-white mb-2">
-          Security PIN
-        </h4>
+        <h4 className="font-semibold text-xs text-slate-900 dark:text-white mb-2">{t("sec.pinTitle")}</h4>
         <LockScreenSettings user={user} />
       </div>
 
       {/* Change Password Form */}
       <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
         <h4 className="font-semibold text-xs text-slate-900 dark:text-white mb-3">
-          Change Password
+          {t("sec.changePassword")}
         </h4>
 
         {user?.providerData?.some((p) => p.providerId === "password") ? (
@@ -98,45 +102,39 @@ export default function SecuritySection({ user }: SecuritySectionProps) {
 
             <form onSubmit={handleChangePassword} className="space-y-4 text-xs">
               <div>
-                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Current Password
-                </label>
+                <label className={labelClass}>{t("sec.currentPassword")}</label>
                 <input
                   type="password"
                   required
-                  placeholder="Enter current password"
+                  placeholder={t("sec.currentPlaceholder")}
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-xs"
+                  className={inputClass}
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    New Password
-                  </label>
+                  <label className={labelClass}>{t("sec.newPassword")}</label>
                   <input
                     type="password"
                     required
-                    placeholder="Min. 6 characters"
+                    placeholder={t("sec.newPlaceholder")}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-xs"
+                    className={inputClass}
                   />
                 </div>
 
                 <div>
-                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Confirm New Password
-                  </label>
+                  <label className={labelClass}>{t("sec.confirmPassword")}</label>
                   <input
                     type="password"
                     required
-                    placeholder="Repeat new password"
+                    placeholder={t("sec.confirmPlaceholder")}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-xs"
+                    className={inputClass}
                   />
                 </div>
               </div>
@@ -147,7 +145,7 @@ export default function SecuritySection({ user }: SecuritySectionProps) {
                   disabled={passwordSaving}
                   className="px-4 py-2 bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white font-medium text-xs rounded-xl transition-colors disabled:opacity-50 cursor-pointer"
                 >
-                  {passwordSaving ? "Updating..." : "Update Password"}
+                  {passwordSaving ? t("sec.updating") : t("sec.updatePassword")}
                 </button>
               </div>
             </form>
@@ -163,12 +161,8 @@ export default function SecuritySection({ user }: SecuritySectionProps) {
               </svg>
             </div>
             <div className="space-y-1">
-              <h5 className="font-semibold text-xs text-slate-900 dark:text-white">
-                Signed in with Google
-              </h5>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                Password and security are managed through your Google Account.
-              </p>
+              <h5 className="font-semibold text-xs text-slate-900 dark:text-white">{t("sec.googleTitle")}</h5>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">{t("sec.googleDesc")}</p>
               <div className="pt-1">
                 <a
                   href="https://myaccount.google.com/security"
@@ -176,7 +170,7 @@ export default function SecuritySection({ user }: SecuritySectionProps) {
                   rel="noreferrer"
                   className="inline-flex items-center text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
                 >
-                  Manage Google Account &rarr;
+                  {t("sec.googleManage")} &rarr;
                 </a>
               </div>
             </div>
