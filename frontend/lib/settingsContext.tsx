@@ -50,7 +50,7 @@ const translations: Record<Language, Record<string, string>> = {
 
     // Dashboard
     "dashboard.title": "Dashboard",
-    "dashboard.subtitle": "Overview of your accounts, envelopes, and rapid actions.",
+    "dashboard.subtitle": "Ringkasan akun, amplop, dan aksi cepat Anda.",
     "dashboard.totalBalance": "Total Saldo Bersih",
     "dashboard.totalIncome": "Total Pemasukan",
     "dashboard.totalExpense": "Total Pengeluaran",

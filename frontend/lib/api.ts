@@ -450,14 +450,15 @@ export interface ChatAction {
 export const sendChat = async (
   message: string,
   history: { role: "user" | "assistant"; text: string }[],
-  language: string = "id"
+  language: "id" | "en" = "id",
+  appMode: "envelope" | "flexible" = "envelope"
 ) => {
   const headers = await getAuthHeaders();
   const user_id = await getUserId();
   const res = await fetch(`${API_URL}/chat`, {
     method: "POST",
     headers,
-    body: JSON.stringify({ message, history, user_id, language }),
+    body: JSON.stringify({ message, history, user_id, language, app_mode: appMode }),
   });
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
@@ -466,13 +467,17 @@ export const sendChat = async (
   return res.json();
 };
 
-export const executeChatActions = async (actions: ChatAction[]) => {
+export const executeChatActions = async (
+  actions: ChatAction[],
+  language: "id" | "en" = "id",
+  appMode: "envelope" | "flexible" = "envelope"
+) => {
   const headers = await getAuthHeaders();
   const user_id = await getUserId();
   const res = await fetch(`${API_URL}/chat/execute`, {
     method: "POST",
     headers,
-    body: JSON.stringify({ actions, user_id }),
+    body: JSON.stringify({ actions, user_id, language, app_mode: appMode }),
   });
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));

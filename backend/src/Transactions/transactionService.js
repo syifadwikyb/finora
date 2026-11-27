@@ -8,6 +8,9 @@ const TRANSACTION_TYPE = Object.freeze({
   EXPENSE: "expense",
 });
 
+const BALANCE_MODE = Object.freeze({ ENVELOPE: "envelope", FLEXIBLE: "flexible" });
+const normalizeMode = (m) => (m === BALANCE_MODE.FLEXIBLE ? BALANCE_MODE.FLEXIBLE : BALANCE_MODE.ENVELOPE);
+
 const createHttpError = (statusCode, message) => {
   const error = new Error(message);
   error.statusCode = statusCode;
@@ -80,7 +83,15 @@ const decreaseBalance = async (client, categoryId, userId, amount, context) => {
   );
 };
 
-const applyTransactionEffect = async (client, { type, amount, categoryId, accountId, allocations }, userId) => {
+const applyTransactionEffect = async (client, { type, amount, categoryId, accountId, allocations, mode }, userId) => {
+  // Mode Bebas: kategori hanya label, langsung ubah saldo akun (boleh minus)
+  if (mode === BALANCE_MODE.FLEXIBLE) {
+    if (!accountId) throw createHttpError(400, "Account is required");
+    const delta = type === TRANSACTION_TYPE.INCOME ? amount : -amount;
+    await accountRepository.updateAccountBalance(accountId, delta, client);
+    return;
+  }
+
   // Ambil detail kategori untuk mengetahui apakah kategori ini punya akun spesifik
   const category = categoryId ? await categoryRepository.findCategoryById(categoryId, userId, client) : null;
   const isCategoryAccountBound = category && category.account_id && (!accountId || Number(category.account_id) === Number(accountId));
@@ -120,6 +131,14 @@ const reverseTransactionEffect = async (client, transaction, userId, action) => 
   const amount = Number(transaction.amount);
   const categoryId = transaction.category_id;
   const accountId = transaction.account_id;
+
+  if (transaction.balance_mode === BALANCE_MODE.FLEXIBLE) {
+    if (accountId) {
+      const delta = transaction.type === TRANSACTION_TYPE.INCOME ? -amount : amount;
+      await accountRepository.updateAccountBalance(accountId, delta, client);
+    }
+    return;
+  }
 
   const category = categoryId ? await categoryRepository.findCategoryById(categoryId, userId, client) : null;
   const isCategoryAccountBound = category && category.account_id && (!accountId || Number(category.account_id) === Number(accountId));
@@ -199,8 +218,10 @@ const createTransaction = async (payload) => {
       ? Number(primaryCategory.account_id)
       : null;
 
+  const mode = normalizeMode(payload.balance_mode);
   const isIncome = payload.type === TRANSACTION_TYPE.INCOME;
-  const allocations = isIncome && Array.isArray(payload.allocations) ? payload.allocations : [];
+  const allocations =
+    mode === BALANCE_MODE.ENVELOPE && isIncome && Array.isArray(payload.allocations) ? payload.allocations : [];
 
   return runInTransaction(async (client) => {
     const createdTransaction = await transactionRepository.createTransaction(
@@ -212,16 +233,17 @@ const createTransaction = async (payload) => {
         account_id: resolvedAccountId,
         allocation_id: null,
         description: payload.description ? String(payload.description).trim() : null,
-        allocations: isIncome ? allocations : null,
+        allocations: isIncome && allocations.length > 0 ? allocations : null,
         transaction_date: payload.transaction_date,
         user_id: payload.user_id,
+        balance_mode: mode,
       },
       client
     );
 
     await applyTransactionEffect(
       client,
-      { type: payload.type, amount, categoryId: primaryCategory.id, accountId: resolvedAccountId, allocations },
+      { type: payload.type, amount, categoryId: primaryCategory.id, accountId: resolvedAccountId, allocations, mode },
       payload.user_id
     );
 
@@ -246,6 +268,11 @@ const updateTransaction = async (transactionId, userId, payload) => {
   assertValidAmount(amount);
   assertValidType(type);
 
+  const mode =
+    payload.balance_mode !== undefined
+      ? normalizeMode(payload.balance_mode)
+      : normalizeMode(existingTransaction.balance_mode);
+
   let accountId =
     payload.account_id !== undefined
       ? payload.account_id
@@ -253,7 +280,7 @@ const updateTransaction = async (transactionId, userId, payload) => {
         : null
       : existingTransaction.account_id;
 
-  if (categoryId && !payload.account_id) {
+  if (mode === BALANCE_MODE.ENVELOPE && categoryId && !payload.account_id) {
     const category = await categoryRepository.findCategoryById(categoryId, userId);
     if (category && category.account_id) {
       accountId = Number(category.account_id);
@@ -287,6 +314,7 @@ const updateTransaction = async (transactionId, userId, payload) => {
         : existingTransaction.description,
     allocations: newAllocations,
     transaction_date: payload.transaction_date || existingTransaction.transaction_date,
+    balance_mode: mode,
   };
 
   return runInTransaction(async (client) => {
@@ -304,7 +332,7 @@ const updateTransaction = async (transactionId, userId, payload) => {
     // 3. Terapkan efek saldo yang baru
     await applyTransactionEffect(
       client,
-      { type, amount, categoryId, accountId, allocations: newAllocations },
+      { type, amount, categoryId, accountId, allocations: newAllocations, mode },
       userId
     );
 

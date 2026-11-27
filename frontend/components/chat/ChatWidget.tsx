@@ -24,7 +24,7 @@ const isDestructive = (actions?: ChatAction[]) =>
 
 export default function ChatWidget() {
     const { user } = useAuth();
-    const { t, language } = useSettings();
+    const { t, language, appMode } = useSettings();
     const [open, setOpen] = useState(false);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState("");
@@ -70,7 +70,7 @@ export default function ChatWidget() {
         setSending(true);
 
         try {
-            const res = await sendChat(text, history, language);
+            const res = await sendChat(text, history, language, appMode);
             const { reply, actions } = res.data as { reply: string; actions: ChatAction[] };
             push({
                 role: "assistant",
@@ -98,7 +98,7 @@ export default function ChatWidget() {
         if (!msg.actions) return;
         setExecutingId(msg.id);
         try {
-            const res = await executeChatActions(msg.actions);
+            const res = await executeChatActions(msg.actions, language, appMode);
             const results = res.data.results as ActionResult[];
             patch(msg.id, { status: "done", results });
             if (results.some((r) => r.ok)) notifyDataChanged();

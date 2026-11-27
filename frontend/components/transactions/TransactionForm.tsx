@@ -20,8 +20,9 @@ interface TransactionFormProps {
     category_id?: number | null;
     account_id?: number | null;
     description?: string;
-    transaction_date: string;
     allocations?: { category_id: number; amount: number }[];
+    transaction_date: string;
+    balance_mode?: "envelope" | "flexible";
   }) => Promise<void>;
   onCancel: () => void;
   loading: boolean;
@@ -191,6 +192,7 @@ export default function TransactionForm({
         description: description.trim() || undefined,
         transaction_date: transactionDate,
         allocations: formattedAllocations,
+        balance_mode: appMode,
       });
     } catch (err: any) {
       setErrorMsg(err.message || t("tx.errSave"));
