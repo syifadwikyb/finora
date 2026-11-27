@@ -20,8 +20,9 @@ interface TransactionFormProps {
     category_id?: number | null;
     account_id?: number | null;
     description?: string;
-    transaction_date: string;
     allocations?: { category_id: number; amount: number }[];
+    transaction_date: string;
+    balance_mode?: "envelope" | "flexible";
   }) => Promise<void>;
   onCancel: () => void;
   loading: boolean;
@@ -54,10 +55,26 @@ export default function TransactionForm({
     setErrorMsg("");
     if (initialData) {
       setTitle(initialData.title || "");
-      setAmount(initialData.amount !== undefined && initialData.amount !== null ? String(Math.round(Number(initialData.amount))) : "");
+      setAmount(
+        initialData.amount !== undefined && initialData.amount !== null
+          ? String(Math.round(Number(initialData.amount)))
+          : ""
+      );
       setType(initialData.type || "expense");
-      setCategoryId(initialData.category_id ? String(initialData.category_id) : (categories.length > 0 ? String(categories[0].id) : ""));
-      setAccountId(initialData.account_id ? String(initialData.account_id) : (accounts.length > 0 ? String(accounts[0].id) : ""));
+      setCategoryId(
+        initialData.category_id
+          ? String(initialData.category_id)
+          : categories.length > 0
+            ? String(categories[0].id)
+            : ""
+      );
+      setAccountId(
+        initialData.account_id
+          ? String(initialData.account_id)
+          : accounts.length > 0
+            ? String(accounts[0].id)
+            : ""
+      );
       setDescription(initialData.description || "");
       setTransactionDate(initialData.transaction_date ? initialData.transaction_date.split("T")[0] : today);
 
@@ -86,10 +103,6 @@ export default function TransactionForm({
   const selectedCategory = categories.find((cat) => String(cat.id) === String(categoryId));
   const linkedAccount = selectedCategory?.account;
 
-  // In envelope mode, the account is derived from the category
-  // In flexible mode, the user selects the account directly
-  const selectedFlexibleAccount = accounts.find((acc) => String(acc.id) === String(accountId));
-
   const targetCategories = categories.filter((cat) => String(cat.id) !== String(categoryId));
 
   const totalIncomeNum = Number(amount) || 0;
@@ -97,9 +110,9 @@ export default function TransactionForm({
   const remainingToAllocate = totalIncomeNum - allocatedSum;
 
   const handleAddAllocation = () => {
-    const nextCategory = targetCategories.find(
-      (c) => !allocations.some((a) => a.category_id === String(c.id))
-    ) || targetCategories[0];
+    const nextCategory =
+      targetCategories.find((c) => !allocations.some((a) => a.category_id === String(c.id))) ||
+      targetCategories[0];
 
     if (!nextCategory) return;
     setAllocations([...allocations, { category_id: String(nextCategory.id), amount: "" }]);
@@ -120,52 +133,55 @@ export default function TransactionForm({
     setErrorMsg("");
 
     if (!title.trim()) {
-      setErrorMsg("Title is required");
+      setErrorMsg(t("tx.errTitle"));
       return;
     }
 
     const numAmount = Number(amount);
     if (!amount || isNaN(numAmount) || numAmount <= 0) {
-      setErrorMsg("Amount must be greater than 0");
+      setErrorMsg(t("tx.errAmount"));
       return;
     }
 
     if (!categoryId) {
-      setErrorMsg("Please select a category");
+      setErrorMsg(t("tx.errCategory"));
       return;
     }
 
     if (!transactionDate) {
-      setErrorMsg("Transaction date is required");
+      setErrorMsg(t("tx.errDate"));
       return;
     }
 
-    // Resolusi akun:
-    // Pada Mode Fleksibel: pakai accountId yang dipilih user (atau fallback ke linkedAccount)
-    // Pada Mode Amplop: pakai linkedAccount dari kategori
+    // Mode bebas: pakai akun pilihan user. Mode amplop: akun dari kategori.
     let finalAccountId: number | null = null;
     if (appMode === "flexible") {
-      finalAccountId = accountId ? Number(accountId) : (linkedAccount ? linkedAccount.id : null);
+      finalAccountId = accountId ? Number(accountId) : linkedAccount ? linkedAccount.id : null;
     } else {
-      finalAccountId = linkedAccount ? linkedAccount.id : (accountId ? Number(accountId) : null);
+      finalAccountId = linkedAccount ? linkedAccount.id : accountId ? Number(accountId) : null;
     }
 
     if (appMode === "envelope" && type === "income" && allocations.length > 0) {
       if (allocatedSum > numAmount) {
-        setErrorMsg(`Total allocated (Rp ${allocatedSum.toLocaleString("id-ID")}) exceeds income amount (Rp ${numAmount.toLocaleString("id-ID")})`);
+        setErrorMsg(
+          t("tx.errAllocExceeds")
+            .replace("{allocated}", allocatedSum.toLocaleString("id-ID"))
+            .replace("{income}", numAmount.toLocaleString("id-ID"))
+        );
         return;
       }
     }
 
     try {
-      const formattedAllocations = appMode === "envelope" && type === "income"
-        ? allocations
+      const formattedAllocations =
+        appMode === "envelope" && type === "income"
+          ? allocations
             .filter((a) => a.category_id && Number(a.amount) > 0)
             .map((a) => ({
               category_id: Number(a.category_id),
               amount: Number(a.amount),
             }))
-        : undefined;
+          : undefined;
 
       await onSubmit({
         title: title.trim(),
@@ -176,11 +192,17 @@ export default function TransactionForm({
         description: description.trim() || undefined,
         transaction_date: transactionDate,
         allocations: formattedAllocations,
+        balance_mode: appMode,
       });
     } catch (err: any) {
-      setErrorMsg(err.message || "Failed to save transaction");
+      setErrorMsg(err.message || t("tx.errSave"));
     }
   };
+
+  const fieldClass =
+    "w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500";
+
+  const accountTypeLabel = (accType: string) => t(`accounts.type_${accType}`);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 text-xs">
@@ -198,27 +220,25 @@ export default function TransactionForm({
         </span>
       </div>
 
-      {/* Type switch: Expense first */}
+      {/* Type switch */}
       <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
         <button
           type="button"
           onClick={() => setType("expense")}
-          className={`py-2 rounded-lg font-semibold transition-all cursor-pointer ${
-            type === "expense"
-              ? "bg-rose-600 text-white shadow-xs"
-              : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
-          }`}
+          className={`py-2 rounded-lg font-semibold transition-all cursor-pointer ${type === "expense"
+            ? "bg-rose-600 text-white shadow-xs"
+            : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+            }`}
         >
           {t("common.expense")}
         </button>
         <button
           type="button"
           onClick={() => setType("income")}
-          className={`py-2 rounded-lg font-semibold transition-all cursor-pointer ${
-            type === "income"
-              ? "bg-emerald-700 text-white shadow-xs"
-              : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
-          }`}
+          className={`py-2 rounded-lg font-semibold transition-all cursor-pointer ${type === "income"
+            ? "bg-emerald-700 text-white shadow-xs"
+            : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+            }`}
         >
           {t("common.income")}
         </button>
@@ -234,12 +254,12 @@ export default function TransactionForm({
           placeholder={t("tx.titlePlaceholder")}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+          className={fieldClass}
           required
         />
       </div>
 
-      {/* Amount & Category / Account Grid */}
+      {/* Amount & Category */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
@@ -248,10 +268,10 @@ export default function TransactionForm({
           <input
             type="text"
             inputMode="numeric"
-            placeholder="e.g. 50.000"
+            placeholder={t("tx.amountPlaceholder")}
             value={withDots(amount)}
             onChange={(e) => setAmount(toDigits(e.target.value))}
-            className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+            className={fieldClass}
             required
           />
         </div>
@@ -263,10 +283,12 @@ export default function TransactionForm({
           <select
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+            className={fieldClass}
             required
           >
-            <option value="" disabled>-- {t("categories.title")} --</option>
+            <option value="" disabled>
+              -- {t("categories.title")} --
+            </option>
             {categories.map((cat) => (
               <option key={cat.id} value={cat.id}>
                 {cat.name} {appMode === "envelope" && cat.account ? `(${cat.account.name})` : ""}
@@ -276,7 +298,7 @@ export default function TransactionForm({
         </div>
       </div>
 
-      {/* MODE FLEKSIBEL: User bebas memilih Akun Pembayaran (BCA, BRI, Mandiri, Cash) */}
+      {/* Mode bebas: pilih akun | Mode amplop: akun otomatis */}
       {appMode === "flexible" ? (
         <div>
           <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
@@ -288,24 +310,24 @@ export default function TransactionForm({
           <select
             value={accountId}
             onChange={(e) => setAccountId(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+            className={fieldClass}
             required
           >
-            <option value="" disabled>-- {t("accounts.title")} --</option>
+            <option value="" disabled>
+              -- {t("accounts.title")} --
+            </option>
             {accounts.map((acc) => (
               <option key={acc.id} value={acc.id}>
-                {acc.name} ({acc.type}) - Saldo: Rp {Number(acc.current_balance || 0).toLocaleString("id-ID")}
+                {acc.name} ({accountTypeLabel(acc.type)}) - {t("tx.balance")}: Rp{" "}
+                {Number(acc.current_balance || 0).toLocaleString("id-ID")}
               </option>
             ))}
           </select>
           <p className="text-[10px] text-slate-400 mt-1">
-            {type === "expense"
-              ? "Pilih rekening atau dompet tempat uang akan dipotong (misal: BRI, BCA, Mandiri, Tunai)."
-              : "Pilih rekening tujuan dana uang masuk."}
+            {type === "expense" ? t("tx.hintExpenseAccount") : t("tx.hintIncomeAccount")}
           </p>
         </div>
       ) : (
-        /* MODE ALOKASI (AMPLOP): Akun otomatis terdeteksi dari kategori */
         <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Landmark className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -316,24 +338,23 @@ export default function TransactionForm({
                   <>
                     {linkedAccount.name}{" "}
                     <span className="text-[10px] text-slate-400 font-normal">
-                      ({linkedAccount.type}) • Saldo: Rp {Number(linkedAccount.current_balance).toLocaleString("id-ID")}
+                      ({accountTypeLabel(linkedAccount.type)}) • {t("tx.balance")}: Rp{" "}
+                      {Number(linkedAccount.current_balance).toLocaleString("id-ID")}
                     </span>
                   </>
                 ) : (
-                  <span className="text-slate-400 font-normal">
-                    {t("categories.unlinked")}
-                  </span>
+                  <span className="text-slate-400 font-normal">{t("categories.unlinked")}</span>
                 )}
               </p>
             </div>
           </div>
           <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
-            Auto
+            {t("tx.auto")}
           </span>
         </div>
       )}
 
-      {/* Allocation section for income (Khusus Mode Alokasi / Envelope) */}
+      {/* Alokasi pemasukan (khusus mode amplop) */}
       {appMode === "envelope" && type === "income" && (
         <div className="p-3.5 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200/80 dark:border-emerald-800/50 space-y-3">
           <div className="flex items-center justify-between">
@@ -352,24 +373,25 @@ export default function TransactionForm({
             </button>
           </div>
 
-          <p className="text-[11px] text-slate-600 dark:text-slate-400">
-            {t("tx.distributeDesc")}
-          </p>
+          <p className="text-[11px] text-slate-600 dark:text-slate-400">{t("tx.distributeDesc")}</p>
 
           {targetCategories.length === 0 && (
             <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 text-[11px]">
-              No other categories available to allocate to.
+              {t("tx.noOtherCategories")}
             </div>
           )}
 
           {allocations.length > 0 && (
             <div className="space-y-2 pt-1">
               {allocations.map((alloc, idx) => (
-                <div key={idx} className="flex items-center gap-2">
+                <div
+                  key={idx}
+                  className="flex flex-col sm:flex-row sm:items-center gap-2 p-2.5 sm:p-0 rounded-xl bg-white/60 dark:bg-slate-800/40 sm:bg-transparent border border-emerald-100 dark:border-emerald-900/40 sm:border-0"
+                >
                   <select
                     value={alloc.category_id}
                     onChange={(e) => handleUpdateAllocation(idx, "category_id", e.target.value)}
-                    className="flex-1 px-2.5 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white"
+                    className="w-full sm:flex-1 sm:min-w-0 px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                   >
                     {categories.map((cat) => (
                       <option key={cat.id} value={cat.id}>
@@ -378,33 +400,47 @@ export default function TransactionForm({
                     ))}
                   </select>
 
-                  <div className="w-32 sm:w-40 relative">
-                    <span className="absolute left-2.5 top-1.5 text-slate-400 text-[11px]">Rp</span>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      placeholder="Amount"
-                      value={withDots(alloc.amount)}
-                      onChange={(e) => handleUpdateAllocation(idx, "amount", toDigits(e.target.value))}
-                      className="w-full pl-8 pr-2.5 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white"
-                    />
-                  </div>
+                  <div className="flex items-center gap-2 w-full sm:w-52 sm:shrink-0">
+                    <div className="relative flex-1 min-w-0">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[11px] font-semibold">
+                        Rp
+                      </span>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        placeholder={t("common.amount")}
+                        value={withDots(alloc.amount)}
+                        onChange={(e) => handleUpdateAllocation(idx, "amount", toDigits(e.target.value))}
+                        className="w-full pl-9 pr-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                      />
+                    </div>
 
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveAllocation(idx)}
-                    className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 cursor-pointer"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveAllocation(idx)}
+                      aria-label={t("common.delete")}
+                      className="p-2 shrink-0 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 cursor-pointer"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               ))}
 
               <div className="pt-2 border-t border-emerald-200/60 dark:border-emerald-800/60 flex items-center justify-between text-[11px]">
                 <span className="text-slate-500">
-                  {t("tx.allocated")}: <strong className="text-slate-900 dark:text-white">Rp {allocatedSum.toLocaleString("id-ID")}</strong>
+                  {t("tx.allocated")}:{" "}
+                  <strong className="text-slate-900 dark:text-white">
+                    Rp {allocatedSum.toLocaleString("id-ID")}
+                  </strong>
                 </span>
-                <span className={remainingToAllocate < 0 ? "text-rose-600 font-bold" : "text-emerald-700 dark:text-emerald-300 font-semibold"}>
+                <span
+                  className={
+                    remainingToAllocate < 0
+                      ? "text-rose-600 font-bold"
+                      : "text-emerald-700 dark:text-emerald-300 font-semibold"
+                  }
+                >
                   {t("tx.remaining")}: Rp {remainingToAllocate.toLocaleString("id-ID")}
                 </span>
               </div>
@@ -415,25 +451,29 @@ export default function TransactionForm({
 
       {/* Date */}
       <div>
-        <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">{t("common.date")} *</label>
+        <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+          {t("common.date")} *
+        </label>
         <input
           type="date"
           value={transactionDate}
           onChange={(e) => setTransactionDate(e.target.value)}
-          className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+          className={fieldClass}
           required
         />
       </div>
 
       {/* Description */}
       <div>
-        <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">{t("common.notes")}</label>
+        <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+          {t("common.notes")}
+        </label>
         <textarea
           rows={2}
-          placeholder="Add short note..."
+          placeholder={t("tx.notesPlaceholder")}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+          className={fieldClass}
         />
       </div>
 
@@ -452,7 +492,7 @@ export default function TransactionForm({
           disabled={loading}
           className="px-5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-700 text-white font-semibold transition-colors disabled:opacity-50 cursor-pointer"
         >
-          {loading ? t("common.loading") : initialData ? t("tx.updateTx") : t("tx.saveTx")}
+          {loading ? t("common.saving") : initialData ? t("tx.updateTx") : t("tx.saveTx")}
         </button>
       </div>
     </form>

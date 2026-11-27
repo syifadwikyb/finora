@@ -4,6 +4,7 @@ import { useState } from "react";
 import { User as UserIcon, Mail, Phone, AtSign, CheckCircle2, AlertCircle } from "lucide-react";
 import { User } from "firebase/auth";
 import { updateUserProfile, getAuthErrorMessage } from "@/lib/firebase";
+import { useSettings } from "@/lib/settingsContext";
 
 interface EditProfileFormProps {
   user: User;
@@ -29,6 +30,7 @@ export default function EditProfileForm({
   setPhone,
   photoURL,
 }: EditProfileFormProps) {
+  const { t } = useSettings();
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileSuccess, setProfileSuccess] = useState<string | null>(null);
   const [profileError, setProfileError] = useState<string | null>(null);
@@ -52,7 +54,7 @@ export default function EditProfileForm({
       };
       localStorage.setItem(`finora_profile_${user.uid}`, JSON.stringify(profileData));
 
-      setProfileSuccess("Profil berhasil diperbarui!");
+      setProfileSuccess(t("edp.success"));
       setTimeout(() => setProfileSuccess(null), 3500);
     } catch (err: any) {
       setProfileError(getAuthErrorMessage(err));
@@ -61,6 +63,10 @@ export default function EditProfileForm({
     }
   };
 
+  const inputClass =
+    "w-full pl-10 pr-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-xs";
+  const labelClass = "block font-medium text-slate-700 dark:text-slate-300 mb-1";
+
   return (
     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs">
       <div className="flex items-center gap-3 pb-4 border-b border-slate-100 dark:border-slate-800 mb-6">
@@ -68,8 +74,8 @@ export default function EditProfileForm({
           <UserIcon className="w-5 h-5" />
         </div>
         <div>
-          <h3 className="font-bold text-base text-slate-900 dark:text-white">Edit Profile</h3>
-          <p className="text-xs text-slate-500">Update your personal information</p>
+          <h3 className="font-bold text-base text-slate-900 dark:text-white">{t("edp.title")}</h3>
+          <p className="text-xs text-slate-500">{t("edp.subtitle")}</p>
         </div>
       </div>
 
@@ -90,34 +96,30 @@ export default function EditProfileForm({
       <form onSubmit={handleSaveProfile} className="space-y-4 text-xs">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-              Full Name
-            </label>
+            <label className={labelClass}>{t("edp.fullName")}</label>
             <div className="relative">
               <UserIcon className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
               <input
                 type="text"
                 required
-                placeholder="Nama Lengkap"
+                placeholder={t("edp.fullNamePlaceholder")}
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
-                className="w-full pl-10 pr-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-xs"
+                className={inputClass}
               />
             </div>
           </div>
 
           <div>
-            <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-              Username
-            </label>
+            <label className={labelClass}>{t("edp.username")}</label>
             <div className="relative">
               <AtSign className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
               <input
                 type="text"
-                placeholder="username"
+                placeholder={t("edp.usernamePlaceholder")}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full pl-10 pr-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-xs"
+                className={inputClass}
               />
             </div>
           </div>
@@ -125,9 +127,7 @@ export default function EditProfileForm({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-              Email Address (Akun)
-            </label>
+            <label className={labelClass}>{t("edp.email")}</label>
             <div className="relative">
               <Mail className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
               <input
@@ -140,9 +140,7 @@ export default function EditProfileForm({
           </div>
 
           <div>
-            <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-              Phone Number
-            </label>
+            <label className={labelClass}>{t("edp.phone")}</label>
             <div className="relative">
               <Phone className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
               <input
@@ -150,7 +148,7 @@ export default function EditProfileForm({
                 placeholder="+62 812 **** ****"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full pl-10 pr-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-xs"
+                className={inputClass}
               />
             </div>
           </div>
@@ -160,9 +158,9 @@ export default function EditProfileForm({
           <button
             type="submit"
             disabled={profileSaving}
-            className="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md shadow-emerald-500/20 transition-all hover:scale-102 disabled:opacity-50"
+            className="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md shadow-emerald-500/20 transition-all hover:scale-102 disabled:opacity-50 cursor-pointer"
           >
-            {profileSaving ? "Saving..." : "Save Profile Changes"}
+            {profileSaving ? t("common.saving") : t("edp.save")}
           </button>
         </div>
       </form>
